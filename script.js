@@ -647,22 +647,21 @@ function renderGame() {
     gameDiv.innerHTML = "";
     //dealer
     let dealerHTML = "<h2>Dealer's Hand</h2>";
-    if (game.dealer.hands.length > 0 &&
-        game.dealer.hands[0].cards.length > 0) {
-        dealerHTML += "<div class='dealerBox'>";
-        if (game.currentPlayer !== null) {
-            // Active round → hide hole card
-            dealerHTML += coloredCard(game.dealer.hands[0].cards[0]);
-            dealerHTML += "<br>🂠 Hidden Card";
-        } else {
-            // Round over → reveal dealer hand
-            dealerHTML += "Total: " + game.dealer.getHandValue() + "<br>";
-            for (let card of game.dealer.hands[0].cards) {
-                dealerHTML += coloredCard(card) + "<br>";
+    dealerHTML += "<div class='dealerBox'>";
+    if (game.dealer.hands.length > 0 && game.dealer.hands[0].cards.length > 0) {
+        const dealerHand = game.dealer.hands[0];
+        for (let i = 0; i < dealerHand.cards.length; i++) {
+            if (game.currentPlayer !== null && i === 1) {
+                dealerHTML += "🂠 "; // hide hole card
+            } else {
+                dealerHTML += coloredCard(dealerHand.cards[i]) + " ";
             }
         }
-        dealerHTML += "</div>";
+        if (game.currentPlayer === null) {
+            dealerHTML += "<br>Total: " + dealerHand.getValue();
+        }
     }
+    dealerHTML += "</div>";
 
     gameDiv.innerHTML += dealerHTML;
 

@@ -10,13 +10,20 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    transform: scale(0.85);
+    transform-origin: top center;
 }
+
 
 /* Player and dealer panels */
 .playerArea, .hand, .dealerBox {
-    width: 300px; /* was 420px */
+    width: 280; /* was 420px */
     padding: 10px; /* smaller padding */
     margin: 8px;   /* smaller margin */
+    font-size: 14px;
+    transition: all 0.2s ease;
+
 }
 
 /* Active hand highlight */
@@ -50,4 +57,26 @@ button {
 button:hover {
     background: #ffffff;
 }
+
+.playerHands {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap; /* hands will wrap if too wide */
+}
+
+.dealerBox {
+    width: 320px;
+    padding: 12px;
+    margin: 10px auto;
+
+    background: linear-gradient(#2a8f55, #1b6b3a);
+    border-radius: 14px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.4);
+
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+
 
