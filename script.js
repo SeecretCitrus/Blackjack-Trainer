@@ -183,6 +183,7 @@ class Game {
         this.startingDeckSize = numDecks * 52;
 
         this.currentHandIndex = 0;
+        this.currentPlayerIndex = 0;
 
         this.phase = "BETTING";
 
@@ -479,7 +480,10 @@ class Dealer extends Player {
     }
 
     getUpCard() {
-        return this.hands[0].cards[0]; // Assuming the dealer's hand is always at index 0 and the first card is the up card
+        if (!this.hands[0] || this.hands[0].cards.length === 0)
+            return new Card("Spades", "2"); // safe fallback
+
+        return this.hands[0].cards[0];
     }
 }
 
@@ -575,8 +579,15 @@ class StrategyEngine {
 let game;
 
 document.getElementById("startBtn").addEventListener("click", () => {
+    console.log("Start button clicked");
+
     game = new Game(4, 6, "manual", false);
+
     game.startRound();
+
+    console.log("Game phase:", game.phase);
+    console.log("Current player:", game.currentPlayer);
+
     renderGame();
 });
 
@@ -690,19 +701,18 @@ function renderGame() {
 }
 
 function handleManualAction(action) {
+    if (!game || !game.currentPlayer) return;
     const correct = StrategyEngine.getDecision(
         game.currentPlayer,
         game.currentHandIndex,
         game.dealer.getUpCard(),
         game.rules
     );
-
     if (action !== correct) {
         console.log("✕ Mistake! Correct play was:", correct);
     } else {
         console.log("✓ Correct play.");
     }
-
     game.handlePlayerAction(action);
     renderGame();
 }
