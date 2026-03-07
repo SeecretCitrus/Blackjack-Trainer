@@ -18,7 +18,7 @@ body {
 
 /* Player and dealer panels */
 .playerArea, .hand, .dealerBox {
-    width: 280; /* was 420px */
+    width: 280px; /* was 420px */
     padding: 10px; /* smaller padding */
     margin: 8px;   /* smaller margin */
     font-size: 14px;
