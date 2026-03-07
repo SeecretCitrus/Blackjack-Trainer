@@ -13,13 +13,10 @@ body {
 }
 
 /* Player and dealer panels */
-.playerArea, .hand {
-    background: linear-gradient(#1b7a43, #145a32);
-    padding: 14px;
-    margin: 12px;
-    border-radius: 14px;
-    width: 420px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+.playerArea, .hand, .dealerBox {
+    width: 300px; /* was 420px */
+    padding: 10px; /* smaller padding */
+    margin: 8px;   /* smaller margin */
 }
 
 /* Active hand highlight */
@@ -54,12 +51,3 @@ button:hover {
     background: #ffffff;
 }
 
-/* Dealer box */
-.dealerBox {
-    background: linear-gradient(#2a8f55, #1b6b3a);
-    padding: 15px;
-    border-radius: 14px;
-    width: 420px;
-    margin: 15px auto;
-    box-shadow: 0 0 12px rgba(0,0,0,0.4);
-}
