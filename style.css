@@ -23,7 +23,9 @@ body {
     margin: 8px;   /* smaller margin */
     font-size: 14px;
     transition: all 0.2s ease;
-
+    background: linear-gradient(#1b7a43, #145a32);
+    border-radius: 4px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.4);
 }
 
 /* Active hand highlight */
