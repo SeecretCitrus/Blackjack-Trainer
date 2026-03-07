@@ -670,29 +670,34 @@ function renderGame() {
         let player = game.players[i];
         let isCurrent = player === game.currentPlayer;
 
-        let playerHTML = "<div class='playerArea'><h2>" + player.name;
+        let playerHTML = "<div class='playerArea'>";
+
+        playerHTML += "<h2>" + player.name;
         if (isCurrent) playerHTML += " <===== YOUR TURN";
         playerHTML += "</h2>";
+
+        playerHTML += "<div class='playerHands'>";
 
         for (let h = 0; h < player.hands.length; h++) {
 
             let total = player.getHandValue(h);
             let isCurrentHand = isCurrent && h === game.currentHandIndex;
+
             playerHTML += "<div class='hand";
-            if (isCurrentHand) {
-                playerHTML += " activeHand";
-            }
+            if (isCurrentHand) playerHTML += " activeHand";
             playerHTML += "'>";
+
             playerHTML += "<strong>Hand " + (h + 1) + " (Value: " + total + ")</strong><br>";
-            if (isCurrentHand) {
-                playerHTML += "ACTIVE HAND<br>";
-            }
+
             for (let card of player.hands[h].cards) {
                 playerHTML += coloredCard(card) + "<br>";
             }
+
             playerHTML += "</div>";
         }
-        playerHTML += "</div>";
+
+        playerHTML += "</div></div>";
+
         gameDiv.innerHTML += playerHTML;
     }
     // Update button states based on current player

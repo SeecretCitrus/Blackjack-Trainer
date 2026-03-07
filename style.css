@@ -11,10 +11,21 @@ body {
     flex-direction: column;
     align-items: center;
 
-    transform: scale(0.85);
-    transform-origin: top center;
+    width: 100%;
+    max-width: 900px;
+
+    margin: auto;
+    padding: 10px;
+
+    gap: 18px;
 }
 
+.playerHands {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap; /* allows hands to wrap if too wide */
+    justify-content: center;
+}
 
 /* Player and dealer panels */
 .playerArea, .hand, .dealerBox {
@@ -58,12 +69,6 @@ button {
 
 button:hover {
     background: #ffffff;
-}
-
-.playerHands {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap; /* hands will wrap if too wide */
 }
 
 .dealerBox {
