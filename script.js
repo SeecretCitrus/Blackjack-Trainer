@@ -614,8 +614,8 @@ function updateButtons() {
 //     renderGame();
 // }
 function suitSymbol(suit) {
-    if (suit === "Hearts") return "♥";
-    if (suit === "Diamonds") return "♦";
+    if (suit === "Hearts") return "<style color="red">♥</style>";
+    if (suit === "Diamonds") return "<style color="red">♦</style>";
     if (suit === "Clubs") return "♣";
     if (suit === "Spades") return "♠";
 }
