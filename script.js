@@ -15,13 +15,7 @@ class Player {
     }
 
     resetHands() {
-        this.hands = [{
-            cards: [],
-            bet: 0,
-            isFinished: false,
-            isDoubled: false,
-            isSplitAces: false,
-        }];
+        this.hands = [new Hand()];
     }
 
     getCard(card, handIndex = 0) {
@@ -29,7 +23,7 @@ class Player {
             throw new Error("Invalid hand index for player " + this.name);
         }
 
-        this.hands[handIndex].cards.push(card);
+        this.hands[handIndex].addCard(card);
     }
 
     sayHello() {
@@ -38,40 +32,11 @@ class Player {
 
 
     getHandValue(handIndex = 0) {
-        let aceCount = 0;
-        let total = 0;
-        let hand = this.hands[handIndex];
-        for (let card of hand.cards) {
-            total += card.getValue();
-            if (card.rank === "Ace") {
-                aceCount++;
-            }
-        }
-        // If there are aces and the total is over 21, treat aces as 1 instead of 11
-        while (total > 21 && aceCount > 0) {
-            total -= 10;
-            aceCount--;
-        }
-        return total;
+        return this.hands[handIndex].getValue();
     }
 
     isSoftHand(handIndex = 0) {
-        let total = 0;
-        let aceCount = 0;
-        let hand = this.hands[handIndex];
-        
-        for (let card of hand.cards) {
-            total += card.getValue();
-            if (card.rank === "Ace") aceCount++;
-        }
-
-        while (total > 21 && aceCount > 0) {
-            total -= 10;
-            aceCount--;
-        }
-
-        // If at least one ace is still counted as 11
-        return aceCount > 0;
+        return this.hands[handIndex].isSoft();
     }
 
     canDouble(handIndex = 0, rules) {
@@ -106,7 +71,67 @@ class Card {
     }
 }
 //--------------------------end of part 2
-//--------the deck class i created but copilot fixed
+//---------------------- HAND CLASS
+class Hand {
+    constructor(bet = 0) {
+        this.cards = [];
+        this.bet = bet;
+        this.isFinished = false;
+        this.isDoubled = false;
+        this.isSplitAces = false;
+    }
+
+    addCard(card) {
+        this.cards.push(card);
+    }
+
+    getValue() {
+        let total = 0;
+        let aceCount = 0;
+
+        for (let card of this.cards) {
+            total += card.getValue();
+            if (card.rank === "Ace") {
+                aceCount++;
+            }
+        }
+
+        while (total > 21 && aceCount > 0) {
+            total -= 10;
+            aceCount--;
+        }
+
+        return total;
+    }
+
+    isSoft() {
+        let total = 0;
+        let aceCount = 0;
+
+        for (let card of this.cards) {
+            total += card.getValue();
+            if (card.rank === "Ace") aceCount++;
+        }
+
+        while (total > 21 && aceCount > 0) {
+            total -= 10;
+            aceCount--;
+        }
+
+        return aceCount > 0;
+    }
+
+    isBlackjack() {
+        return this.cards.length === 2 && this.getValue() === 21;
+    }
+
+    isBust() {
+        return this.getValue() > 21;
+    }
+}
+// ======================================================
+// DECK CLASS
+// ======================================================
 class Deck {
     constructor(numDecks = 1) {
         const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
@@ -136,6 +161,9 @@ class Deck {
     }
 }
 //------------------end of part 4
+// ======================================================
+// GAME ENGINE
+// ======================================================
 class Game {
     constructor(numPlayers, numDecks, mode = "automatic", S17 = false) {
         this.numDecks = numDecks;
@@ -405,16 +433,12 @@ class Game {
         const handToSplit = player.hands[handIndex];
         const cardToMove = handToSplit.cards.pop();
 
-        const newHand = {
-            cards: [cardToMove],
-            bet: handToSplit.bet,
-            isFinished: false,
-                isDoubled: false,
-                isSplitAces: false
-        };
+        const newHand = new Hand(handToSplit.bet);
+        newHand.addCard(cardToMove);
+
         const isAceSplit = cardToMove.rank === "Ace";
-        handToSplit.cards.push(this.deck.deal());
-        newHand.cards.push(this.deck.deal());
+        handToSplit.addCard(this.deck.deal());
+        newHand.addCard(this.deck.deal());
         if (isAceSplit) {
             handToSplit.isSplitAces = true;
             newHand.isSplitAces = true;
@@ -589,6 +613,12 @@ function updateButtons() {
 //     game.handlePlayerAction("H");
 //     renderGame();
 // }
+function suitSymbol(suit) {
+    if (suit === "Hearts") return "♥";
+    if (suit === "Diamonds") return "♦";
+    if (suit === "Clubs") return "♣";
+    if (suit === "Spades") return "♠";
+}
 
 function renderGame() {
     const gameDiv = document.getElementById("game");
@@ -600,7 +630,7 @@ function renderGame() {
             dealerHTML += game.dealer.hands[0].cards[0].rank + " of " + game.dealer.hands[0].cards[0].suit + "<br>[Hidden Card]<br>";
         } else {
             for (let card of game.dealer.hands[0].cards) {
-                dealerHTML += card.rank + " of " + card.suit + "<br>";
+                dealerHTML += card.rank + " " + suitSymbol(card.suit) + "<br>";
             }
         }
     }
@@ -612,22 +642,29 @@ function renderGame() {
         let player = game.players[i];
         let isCurrent = player === game.currentPlayer;
 
-        let playerHTML = "<h2>" + player.name;
+        let playerHTML = "<div class='playerArea'><h2>" + player.name;
         if (isCurrent) playerHTML += " <===== YOUR TURN";
-        playerHTML += "</h2><ul>";
+        playerHTML += "</h2>";
 
         for (let h = 0; h < player.hands.length; h++) {
+
             let total = player.getHandValue(h);
             let isCurrentHand = isCurrent && h === game.currentHandIndex;
-            playerHTML += "<li><strong>Hand " + (h + 1) + " (Value: " + total + "): ";
-            if (isCurrentHand) playerHTML += "<----- ACTIVE HAND"
-            playerHTML += "</strong><ul>";
-            for (let card of player.hands[h].cards) {
-                playerHTML += "<li>" + card.rank + " of " + card.suit + "</li>";
+            playerHTML += "<div class='hand";
+            if (isCurrentHand) {
+                playerHTML += " activeHand";
             }
-            playerHTML += "</ul></li>";
+            playerHTML += "'>";
+            playerHTML += "<strong>Hand " + (h + 1) + " (Value: " + total + ")</strong><br>";
+            if (isCurrentHand) {
+                playerHTML += "ACTIVE HAND<br>";
+            }
+            for (let card of player.hands[h].cards) {
+                playerHTML += card.rank + " " + suitSymbol(card.suit) + "<br>";
+            }
+            playerHTML += "</div>";
         }
-        playerHTML += "</ul>";
+        playerHTML += "</div>";
         gameDiv.innerHTML += playerHTML;
     }
     // Update button states based on current player
