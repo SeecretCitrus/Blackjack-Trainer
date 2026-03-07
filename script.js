@@ -614,36 +614,43 @@ function updateButtons() {
 //     renderGame();
 // }
 function suitSymbol(suit) {
-    if (suit === "Hearts") return "<style color="red">♥</style>";
-    if (suit === "Diamonds") return "<style color="red">♦</style>";
-    if (suit === "Clubs") return "♣";
-    if (suit === "Spades") return "♠";
+    switch(suit) {
+        case "Hearts": return "♥";
+        case "Diamonds": return "♦";
+        case "Clubs": return "♣";
+        case "Spades": return "♠";
+    }
+}
+
+function coloredCard(card) {
+    let color = (card.suit === "Hearts" || card.suit === "Diamonds")
+        ? "red"
+        : "black";
+    return `<span class="cardSymbol" style="color:${color}">
+                ${card.rank}${suitSymbol(card.suit)}
+            </span>`;
 }
 
 function renderGame() {
     const gameDiv = document.getElementById("game");
     gameDiv.innerHTML = "";
     //dealer
-    let dealerHTML = "<h2>Dealer's Hand:</h2>";
-    if (game.dealer.hands.length > 0 && game.dealer.hands[0].cards.length > 0) {
-        // If round is still active → hide dealer hole card
+    let dealerHTML = "<h2>Dealer's Hand</h2>";
+    if (game.dealer.hands.length > 0 &&
+        game.dealer.hands[0].cards.length > 0) {
+        dealerHTML += "<div class='dealerBox'>";
         if (game.currentPlayer !== null) {
-            dealerHTML += "<div class='hand'>";
-            dealerHTML += game.dealer.hands[0].cards[0].rank + " " +
-                        suitSymbol(game.dealer.hands[0].cards[0].suit) +
-                        "<br>🂠 Hidden Card";
-            dealerHTML += "</div>";
-        }
-        else {
-            // Round over → show dealer full hand + total
-            dealerHTML += "<div class='hand'>";
+            // Active round → hide hole card
+            dealerHTML += coloredCard(game.dealer.hands[0].cards[0]);
+            dealerHTML += "<br>🂠 Hidden Card";
+        } else {
+            // Round over → reveal dealer hand
             dealerHTML += "Total: " + game.dealer.getHandValue() + "<br>";
             for (let card of game.dealer.hands[0].cards) {
-                dealerHTML += card.rank + " " +
-                            suitSymbol(card.suit) + "<br>";
+                dealerHTML += coloredCard(card) + "<br>";
             }
-            dealerHTML += "</div>";
         }
+        dealerHTML += "</div>";
     }
 
     gameDiv.innerHTML += dealerHTML;
@@ -671,7 +678,7 @@ function renderGame() {
                 playerHTML += "ACTIVE HAND<br>";
             }
             for (let card of player.hands[h].cards) {
-                playerHTML += card.rank + " " + suitSymbol(card.suit) + "<br>";
+                playerHTML += coloredCard(card) + "<br>";
             }
             playerHTML += "</div>";
         }
