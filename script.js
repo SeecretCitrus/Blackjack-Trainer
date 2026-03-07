@@ -24,20 +24,18 @@ class Player {
         }];
     }
 
-    getCard(card, handsIndex = 0) {
-        if (!this.hands[handsIndex]) {
-            this.resetHands(); // Ensure there's at least one hand to receive the card
+    getCard(card, handIndex = 0) {
+        if (!this.hands[handIndex]) {
+            throw new Error("Invalid hand index for player " + this.name);
         }
-        this.hands[handsIndex].cards.push(card);
+
+        this.hands[handIndex].cards.push(card);
     }
 
     sayHello() {
         console.log("Hello, I am " + this.name);
     }
 
-    addPoint() {
-        this.score++;
-    }
 
     getHandValue(handIndex = 0) {
         let aceCount = 0;
@@ -231,12 +229,18 @@ class Game {
             if (dealerBlackjack && playerBlackjack && !this.silent) {
                 console.log("Push: both have blackjack");
                 playerHand.isFinished = true;
+                this.stats.pushes++;
+                this.stats.handsPlayed++;
             } else if (playerBlackjack && !this.silent) {
                 console.log(player.name + " has blackjack!");
                 playerHand.isFinished = true;
+                this.stats.wins++;
+                this.stats.handsPlayed++;
             } else if (dealerBlackjack && !this.silent) {
                 console.log("Dealer has blackjack.");
                 playerHand.isFinished = true;
+                this.stats.losses++;
+                this.stats.handsPlayed++;
             }
         }
 
@@ -257,16 +261,16 @@ class Game {
 
     startRound() {
         this.phase = "BETTING";
-        if (this.deck.cards.length < 52 * this.numDecks * (1 - this.penetration)) {
-            this.deck = new Deck(this.numDecks);
-            this.deck.shuffle();
-        }
         this.currentHandIndex = 0;
         this.currentPlayerIndex = 0;
         this.currentPlayer = this.players[0];
 
         this.checkShuffle();
         this.resetHands();
+        for (let player of this.players) {
+            player.currentBet = 10; // temporary fixed bet
+            player.hands[0].bet = player.currentBet;
+        }
         this.initialDeal();
             // Check for dealer blackjack immediately after the initial deal
         this.checkNaturals();
@@ -517,25 +521,22 @@ class StrategyEngine {
 
         let tableDecision;
 
-        if (isSoft && S17SoftTable[playerTotal]) {
-            tableDecision = S17SoftTable[playerTotal][dealerValue];
-        }
-        else if (!isSoft && S17HardTable[playerTotal]) {
-            tableDecision = S17HardTable[playerTotal][dealerValue];
+        if (isSoft) {
+            if (S17SoftTable[playerTotal]) {
+                tableDecision = S17SoftTable[playerTotal][dealerValue];
+            }
+        } else {
+            const hardTable = rules.dealerHitsSoft17 ? H17HardTable : S17HardTable;
+            if (hardTable[playerTotal]) {
+                tableDecision = hardTable[playerTotal][dealerValue];
+            }
         }
         if (tableDecision === "D" || tableDecision === "Ds") {
-            if (player.canDouble(handIndex, rules)) return "D";
-            return tableDecision === "D" ? "H" : "S"; // If the table says double but we can't, hit if it was D, stand if it was Ds
-        }
-
-
-        if (isSoft && S17SoftTable[playerTotal]) {
-            tableDecision = S17SoftTable[playerTotal][dealerValue];
-            if (tableDecision === "Ds") return "S";
-            return tableDecision || "H";
-        } 
-        if (!isSoft && S17HardTable[playerTotal]) {
-            return S17HardTable[playerTotal][dealerValue] || "H";
+            if (player.canDouble(handIndex, rules)) {
+                return "D";
+            } else if (tableDecision === "Ds") {
+                return "S"; // If double is recommended but not allowed, stand if it's a "Ds" decision, otherwise hit
+            }
         }
 
         if (isSoft && playerTotal >= 19) return "S";
@@ -652,7 +653,7 @@ function handleManualAction(action) {
 }
 
 document.getElementById("simulateBtn").addEventListener("click", () => {
-    game = new Game(1, 6, "automatic", false);
+    game = new Game(1, 6, "automatic", true);
 
     for (let i = 0; i < 100000; i++) {
         game.playFullRound(StrategyEngine);
@@ -667,6 +668,7 @@ document.getElementById("simulateBtn").addEventListener("click", () => {
 
     let winRate = game.stats.wins / game.stats.handsPlayed;
     console.log("Win Rate:", winRate);
+    console.log("Win Rate (excluding pushes):", game.stats.wins / (game.stats.handsPlayed - game.stats.pushes));
 });
 
 
