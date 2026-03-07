@@ -646,8 +646,8 @@ function renderGame() {
     const gameDiv = document.getElementById("game");
     gameDiv.innerHTML = "";
     //dealer
-    let dealerHTML = "<h2>Dealer's Hand</h2>";
-    dealerHTML += "<div class='dealerBox'>";
+    let dealerHTML = `<div class="dealerArea"> 
+    <h2>Dealer's Hand</h2> <div class="dealerBox">`;
     if (game.dealer.hands.length > 0 && game.dealer.hands[0].cards.length > 0) {
         const dealerHand = game.dealer.hands[0];
         for (let i = 0; i < dealerHand.cards.length; i++) {
@@ -661,7 +661,7 @@ function renderGame() {
             dealerHTML += "<br>Total: " + dealerHand.getValue();
         }
     }
-    dealerHTML += "</div>";
+    dealerHTML += "</div></div>";
 
     gameDiv.innerHTML += dealerHTML;
 
@@ -669,17 +669,19 @@ function renderGame() {
     for (let i = 0; i < game.players.length; i++) {
         let player = game.players[i];
         let isCurrent = player === game.currentPlayer;
-
-        let playerHTML = "<div class='playerArea'>";
-
+        let seatClass = "player" + (i + 1);
+        
+        // SINGLE div wrapper per player, includes the seat class
+        let playerHTML = `<div class="playerArea ${seatClass}">`;
+        // Player header
         playerHTML += "<h2>" + player.name;
         if (isCurrent) playerHTML += " <===== YOUR TURN";
         playerHTML += "</h2>";
-
+        // Hands container
         playerHTML += "<div class='playerHands'>";
 
+        // Loop through each hand
         for (let h = 0; h < player.hands.length; h++) {
-
             let total = player.getHandValue(h);
             let isCurrentHand = isCurrent && h === game.currentHandIndex;
 
@@ -693,14 +695,16 @@ function renderGame() {
                 playerHTML += coloredCard(card) + "<br>";
             }
 
-            playerHTML += "</div>";
+            playerHTML += "</div>"; // close hand
         }
 
-        playerHTML += "</div></div>";
+        playerHTML += "</div>"; // close playerHands
+        playerHTML += "</div>"; // close playerArea
 
         gameDiv.innerHTML += playerHTML;
     }
-    // Update button states based on current player
+
+// Update button states based on current player
     updateButtons();
 }
 

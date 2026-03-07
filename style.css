@@ -7,18 +7,36 @@ body {
 
 /* Table container */
 #game {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    width: 100%;
-    max-width: 900px;
-
-    margin: auto;
-    padding: 10px;
-
+    display: grid;
+    grid-template-areas:
+        "p1 dealer p2"
+        "p3 dealer p4"
+        "p5 dealer p6"
+        "p7 dealer p8";
     gap: 18px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 80vh;
+    overflow: hidden;
+    margin: auto;
 }
+
+/* Dealer in center */
+.dealerArea {
+    grid-area: dealer;
+}
+
+/* Player seats */
+.player1 { grid-area: p1; }
+.player2 { grid-area: p2; }
+.player3 { grid-area: p3; }
+.player4 { grid-area: p4; }
+.player5 { grid-area: p5; }
+.player6 { grid-area: p6; }
+.player7 { grid-area: p7; }
+.player8 { grid-area: p8; }
+
 
 .playerHands {
     display: flex;
@@ -84,6 +102,3 @@ button:hover {
     justify-content: center;
     gap: 8px;
 }
-
-
-
