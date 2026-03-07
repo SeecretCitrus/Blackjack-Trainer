@@ -644,67 +644,80 @@ function coloredCard(card) {
 
 function renderGame() {
     const gameDiv = document.getElementById("game");
+
     gameDiv.innerHTML = "";
-    //dealer
-    let dealerHTML = `<div class="dealerArea"> 
-    <h2>Dealer's Hand</h2> <div class="dealerBox">`;
+
+    if (!game) return;
+
+    //---------------- DEALER ----------------//
+
+    let dealerHTML = `
+        <div class="dealerArea">
+            <h2>Dealer</h2>
+            <div class="dealerBox">
+    `;
+
     if (game.dealer.hands.length > 0 && game.dealer.hands[0].cards.length > 0) {
         const dealerHand = game.dealer.hands[0];
+
         for (let i = 0; i < dealerHand.cards.length; i++) {
+
             if (game.currentPlayer !== null && i === 1) {
-                dealerHTML += "🂠 "; // hide hole card
+                dealerHTML += "🂠 ";
             } else {
                 dealerHTML += coloredCard(dealerHand.cards[i]) + " ";
             }
         }
+
         if (game.currentPlayer === null) {
             dealerHTML += "<br>Total: " + dealerHand.getValue();
         }
     }
+
     dealerHTML += "</div></div>";
 
     gameDiv.innerHTML += dealerHTML;
 
-    //players
+    //---------------- PLAYERS ----------------//
+
     for (let i = 0; i < game.players.length; i++) {
+
         let player = game.players[i];
         let isCurrent = player === game.currentPlayer;
-        let seatClass = "player" + (i + 1);
-        
-        // SINGLE div wrapper per player, includes the seat class
-        let playerHTML = `<div class="playerArea ${seatClass}">`;
-        // Player header
-        playerHTML += "<h2>" + player.name;
-        if (isCurrent) playerHTML += " <===== YOUR TURN";
-        playerHTML += "</h2>";
-        // Hands container
-        playerHTML += "<div class='playerHands'>";
 
-        // Loop through each hand
+        let seatClass = "player" + (i + 1);
+
+        let playerHTML = `
+            <div class="playerArea ${seatClass}">
+                <h2>
+                    ${player.name}
+                    ${isCurrent ? " <===== YOUR TURN" : ""}
+                </h2>
+
+                <div class="playerHands">
+        `;
+
         for (let h = 0; h < player.hands.length; h++) {
+
             let total = player.getHandValue(h);
             let isCurrentHand = isCurrent && h === game.currentHandIndex;
 
-            playerHTML += "<div class='hand";
-            if (isCurrentHand) playerHTML += " activeHand";
-            playerHTML += "'>";
-
-            playerHTML += "<strong>Hand " + (h + 1) + " (Value: " + total + ")</strong><br>";
+            playerHTML += `<div class="hand ${isCurrentHand ? "activeHand" : ""}">
+                <strong>Hand ${h+1} (Value: ${total})</strong><br>
+            `;
 
             for (let card of player.hands[h].cards) {
                 playerHTML += coloredCard(card) + "<br>";
             }
 
-            playerHTML += "</div>"; // close hand
+            playerHTML += "</div>";
         }
 
-        playerHTML += "</div>"; // close playerHands
-        playerHTML += "</div>"; // close playerArea
+        playerHTML += `</div></div>`;
 
         gameDiv.innerHTML += playerHTML;
     }
 
-// Update button states based on current player
     updateButtons();
 }
 

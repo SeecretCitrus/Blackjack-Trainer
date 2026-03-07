@@ -2,32 +2,32 @@ body {
     font-family: Arial, sans-serif;
     background: radial-gradient(circle, #0f7a3a, #0b4d26);
     color: white;
-    text-align: center;
+    margin: 0;
+    overflow: hidden;
 }
 
-/* Table container */
+/* Casino Table Container */
 #game {
     display: grid;
+
     grid-template-areas:
-        "p1 dealer p2"
-        "p3 dealer p4"
-        "p5 dealer p6"
-        "p7 dealer p8";
-    gap: 18px;
+        "p1 p2 p3"
+        "p4 dealer p5"
+        "p6 p7 p8";
+
     justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 80vh;
-    overflow: hidden;
-    margin: auto;
+    align-content: center;
+
+    width: 100vw;
+    height: 90vh;
+
+    gap: 20px;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
-/* Dealer in center */
-.dealerArea {
-    grid-area: dealer;
-}
-
-/* Player seats */
+/* Seat mapping */
+.dealerArea { grid-area: dealer; }
 .player1 { grid-area: p1; }
 .player2 { grid-area: p2; }
 .player3 { grid-area: p3; }
@@ -37,68 +37,42 @@ body {
 .player7 { grid-area: p7; }
 .player8 { grid-area: p8; }
 
+/* Panels */
+.playerArea, .dealerArea {
+    background: linear-gradient(#1b7a43, #145a32);
+    padding: 12px;
+    border-radius: 10px;
+    width: 260px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    text-align: center;
+}
 
+/* Hands */
 .playerHands {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap; /* allows hands to wrap if too wide */
+    gap: 10px;
     justify-content: center;
 }
 
-/* Player and dealer panels */
-.playerArea, .hand, .dealerBox {
-    width: 280px; /* was 420px */
-    padding: 10px; /* smaller padding */
-    margin: 8px;   /* smaller margin */
-    font-size: 14px;
-    transition: all 0.2s ease;
-    background: linear-gradient(#1b7a43, #145a32);
-    border-radius: 4px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.4);
+.hand {
+    background: rgba(0,0,0,0.25);
+    padding: 8px;
+    border-radius: 8px;
+    min-width: 120px;
 }
 
-/* Active hand highlight */
 .activeHand {
     border: 3px solid gold;
 }
 
-/* Card glyph styling */
 .cardSymbol {
     font-size: 22px;
     font-weight: bold;
-    font-family: "Segoe UI Symbol", "Noto Color Emoji", Arial;
-}
-
-/* Control buttons */
-#controls {
-    margin-top: 4px;
-}
-
-button {
-    padding: 10px 18px;
-    margin: 6px;
-    font-size: 15px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    background: #e6e6e6;
-    transition: 0.2s;
-}
-
-button:hover {
-    background: #ffffff;
 }
 
 .dealerBox {
-    width: 320px;
-    padding: 12px;
-    margin: 10px auto;
-
-    background: linear-gradient(#2a8f55, #1b6b3a);
-    border-radius: 14px;
-    box-shadow: 0 0 12px rgba(0,0,0,0.4);
-
     display: flex;
     justify-content: center;
     gap: 8px;
+    padding-top: 6px;
 }
