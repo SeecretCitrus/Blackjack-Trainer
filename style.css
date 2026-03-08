@@ -13,7 +13,7 @@ body {
     background: radial-gradient(circle, #0f7a3a, #0b4d26);
     color: white;
     margin: 0;
-    overflow: hidden;
+    overflow: auto;
 }
 
 /* Casino Table Container */
@@ -33,7 +33,7 @@ body {
 
     max-width: 900px;
     width: 90%;
-    height: 90vh;
+    height: 70vh;
 
     gap: 15px;
     padding: 20px;
