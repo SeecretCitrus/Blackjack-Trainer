@@ -663,14 +663,14 @@ function renderGame() {
         for (let i = 0; i < dealerHand.cards.length; i++) {
 
             if (game.currentPlayer !== null && i === 1) {
-                dealerHTML += "<br>🂠 ";
+                dealerHTML += "🂠 ";
             } else {
                 dealerHTML += coloredCard(dealerHand.cards[i]) + " ";
             }
         }
 
         if (game.currentPlayer === null) {
-            dealerHTML += "<br><span style='text-align: center;'>Total: " + dealerHand.getValue() + "</span>";
+            dealerHTML += "<br>Total: " + dealerHand.getValue();
         }
     }
 
@@ -691,7 +691,7 @@ function renderGame() {
             <div class="playerArea ${seatClass}">
                 <h2>
                     ${player.name}
-                    ${isCurrent ? " <===== YOUR TURN" : ""}
+                    ${isCurrent ? "<br>YOUR TURN" : ""}
                 </h2>
 
                 <div class="playerHands">
