@@ -30,6 +30,9 @@ function renderGame(game) {
         if (game.currentPlayer === null) {
             dealerHTML += "<br>Total: " + dealerHand.getValue();
         }
+        if (game.phase === "ROUND_OVER") {
+            dealerHTML += "<br><strong>Round Finished</strong>";
+        }
     }
 
     dealerHTML += "</div></div>";

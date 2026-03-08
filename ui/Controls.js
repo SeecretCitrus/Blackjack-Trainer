@@ -14,7 +14,7 @@ function updateButtons() {
 }
 
 function handleManualAction(action) {
-    if (!game || !game.currentPlayer) return;
+    if (!game || game.phase !== "PLAYER_TURN") return;
     const correct = StrategyEngine.getDecision(
         game.currentPlayer,
         game.currentHandIndex,
@@ -27,6 +27,7 @@ function handleManualAction(action) {
         console.log("✓ Correct play.");
     }
     game.handlePlayerAction(action);
+    updateButtons();
 }
 
 function setupControls() {
@@ -41,30 +42,45 @@ function setupControls() {
         console.log("Current player:", game.currentPlayer);
 
         renderGame(game);
+        updateButtons();
     });
 
     document.getElementById("hitBtn").addEventListener("click", () => {
         handleManualAction("H");
         renderGame(game);
+        updateButtons();
     });
 
     document.getElementById("standBtn").addEventListener("click", () => {
         handleManualAction("S");
         renderGame(game);
+        updateButtons();
     });
 
     document.getElementById("doubleBtn").addEventListener("click", () => {
         handleManualAction("D");
         renderGame(game);
+        updateButtons();
     });
 
     document.getElementById("splitBtn").addEventListener("click", () => {
         handleManualAction("P");
         renderGame(game);
+        updateButtons();
     });
 
     document.getElementById("simulateBtn").addEventListener("click", () => {
         Simulator.runSimulation();
+    });
+
+    document.getElementById("nextRoundBtn").addEventListener("click", () => {
+
+        if (!game) return;
+
+        game.startRound();
+
+        renderGame(game);
+        updateButtons();
     });
 }
 
