@@ -1,4 +1,6 @@
-//-------------the Card class i created
+// ======================================================
+// Card class representing a single playing card with a suit and rank.
+// ======================================================
 class Card {
     constructor(suit, rank) {
         this.suit = suit;
@@ -16,4 +18,4 @@ class Card {
     }
 }
 
-export { Card };
+export { Card }; 

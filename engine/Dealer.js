@@ -1,7 +1,9 @@
 import { Player } from './Player.js';
 import { Card } from './Card.js';
 
-//dealer class which i need to finish later but i just want to get it in here for now
+// ======================================================
+// Dealer class represents the dealer in a blackjack game. It inherits from the Player class and has specific behavior for hitting and showing the up card.
+// ======================================================
 class Dealer extends Player {
     constructor() {
         super("Dealer");

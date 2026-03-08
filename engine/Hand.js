@@ -1,4 +1,6 @@
-//---------------------- HAND CLASS
+// ======================================================
+// Hand Class - Represents a player's hand in the game
+// ======================================================
 class Hand {
     constructor(bet = 0) {
         this.cards = [];

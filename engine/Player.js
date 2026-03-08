@@ -1,6 +1,8 @@
 import { Hand } from './Hand.js';
 
-//--------------------classes
+// ======================================================
+// Player class represents a player in the game, holding their name, hands, money, and current bet. It provides methods to manage the player's hands and bets, as well as to check if certain actions are allowed based on the game rules.
+// ======================================================
 class Player {
     constructor(name) {
         this.name = name;
