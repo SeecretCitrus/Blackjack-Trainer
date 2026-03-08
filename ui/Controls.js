@@ -75,7 +75,7 @@ function setupControls() {
 
     document.getElementById("nextRoundBtn").addEventListener("click", () => {
 
-        if (!game) return;
+        if (!game.phase === "ROUND_OVER") return;
 
         game.startRound();
 
