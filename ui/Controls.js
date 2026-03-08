@@ -18,7 +18,12 @@ function updateButtons() {
         noPlayer || !game.currentPlayer.canSplit(game.currentHandIndex);
 
     document.getElementById("nextRoundBtn").disabled =
-        !game || game.phase !== "ROUND_OVER";
+        !game || !game.phase == "ROUND_OVER";
+}
+
+function refreshUI() {
+    renderGame(game);
+    updateButtons();
 }
 
 function handleManualAction(action) {
@@ -35,8 +40,7 @@ function handleManualAction(action) {
         console.log("✓ Correct play.");
     }
     game.handlePlayerAction(action);
-    renderGame(game);
-    updateButtons();
+    refreshUI();
 }
 
 function setupControls() {
@@ -50,8 +54,7 @@ function setupControls() {
         console.log("Game phase:", game.phase);
         console.log("Current player:", game.currentPlayer);
 
-        renderGame(game);
-        updateButtons();
+        refreshUI();
     });
 
     document.getElementById("hitBtn").addEventListener("click", () => {
@@ -77,8 +80,7 @@ function setupControls() {
     document.getElementById("nextRoundBtn").addEventListener("click", () => {
         if (!game || game.phase !== "ROUND_OVER") return;
         game.startRound();
-        renderGame(game);
-        updateButtons();
+        refreshUI();
 
     });
 
