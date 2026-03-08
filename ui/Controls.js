@@ -6,26 +6,19 @@ import { Simulator } from '../logic/Simulator.js';
 let game;
 
 function updateButtons() {
+    const noPlayer = !game || game.currentPlayer === null;
 
-    if (!game || !game.currentPlayer) {
-        document.getElementById("hitBtn").disabled = true;
-        document.getElementById("standBtn").disabled = true;
-        document.getElementById("doubleBtn").disabled = true;
-        document.getElementById("splitBtn").disabled = true;
-        return;
-    }
-
-    const player = game.currentPlayer;
-    const handIndex = game.currentHandIndex;
-
-    document.getElementById("hitBtn").disabled = false;
-    document.getElementById("standBtn").disabled = false;
+    document.getElementById("hitBtn").disabled = noPlayer;
+    document.getElementById("standBtn").disabled = noPlayer;
 
     document.getElementById("doubleBtn").disabled =
-        !player.canDouble(handIndex, game.rules);
+        noPlayer || !game.currentPlayer.canDouble(game.currentHandIndex);
 
     document.getElementById("splitBtn").disabled =
-        !player.canSplit(handIndex, game.rules);
+        noPlayer || !game.currentPlayer.canSplit(game.currentHandIndex);
+
+    document.getElementById("nextRoundBtn").disabled =
+        !game || game.phase !== "ROUND_OVER";
 }
 
 function handleManualAction(action) {
@@ -84,9 +77,12 @@ function setupControls() {
     document.getElementById("nextRoundBtn").addEventListener("click", () => {
         if (!game || game.phase !== "ROUND_OVER") return;
         game.startRound();
+        renderGame(game);
+        updateButtons();
+
     });
 
-    
+
 }
 
 export { setupControls, updateButtons, handleManualAction };
