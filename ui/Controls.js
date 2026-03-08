@@ -6,11 +6,26 @@ import { Simulator } from '../logic/Simulator.js';
 let game;
 
 function updateButtons() {
-    const disabled = game.currentPlayer === null;
-    document.getElementById("hitBtn").disabled = disabled;
-    document.getElementById("standBtn").disabled = disabled;
-    document.getElementById("doubleBtn").disabled = disabled;
-    document.getElementById("splitBtn").disabled = disabled;
+
+    if (!game || !game.currentPlayer) {
+        document.getElementById("hitBtn").disabled = true;
+        document.getElementById("standBtn").disabled = true;
+        document.getElementById("doubleBtn").disabled = true;
+        document.getElementById("splitBtn").disabled = true;
+        return;
+    }
+
+    const player = game.currentPlayer;
+    const handIndex = game.currentHandIndex;
+
+    document.getElementById("hitBtn").disabled = false;
+    document.getElementById("standBtn").disabled = false;
+
+    document.getElementById("doubleBtn").disabled =
+        !player.canDouble(handIndex, game.rules);
+
+    document.getElementById("splitBtn").disabled =
+        !player.canSplit(handIndex, game.rules);
 }
 
 function handleManualAction(action) {
@@ -27,6 +42,7 @@ function handleManualAction(action) {
         console.log("✓ Correct play.");
     }
     game.handlePlayerAction(action);
+    renderGame(game);
     updateButtons();
 }
 
@@ -47,26 +63,18 @@ function setupControls() {
 
     document.getElementById("hitBtn").addEventListener("click", () => {
         handleManualAction("H");
-        renderGame(game);
-        updateButtons();
     });
 
     document.getElementById("standBtn").addEventListener("click", () => {
         handleManualAction("S");
-        renderGame(game);
-        updateButtons();
     });
 
     document.getElementById("doubleBtn").addEventListener("click", () => {
         handleManualAction("D");
-        renderGame(game);
-        updateButtons();
     });
 
     document.getElementById("splitBtn").addEventListener("click", () => {
         handleManualAction("P");
-        renderGame(game);
-        updateButtons();
     });
 
     document.getElementById("simulateBtn").addEventListener("click", () => {
@@ -74,14 +82,11 @@ function setupControls() {
     });
 
     document.getElementById("nextRoundBtn").addEventListener("click", () => {
-
-        if (!game.phase === "ROUND_OVER") return;
-
+        if (!game || game.phase !== "ROUND_OVER") return;
         game.startRound();
-
-        renderGame(game);
-        updateButtons();
     });
+
+    
 }
 
 export { setupControls, updateButtons, handleManualAction };
