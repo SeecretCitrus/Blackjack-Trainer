@@ -18,7 +18,7 @@ function updateButtons() {
         noPlayer || !game.currentPlayer.canSplit(game.currentHandIndex);
 
     document.getElementById("nextRoundBtn").disabled =
-        !game || !game.phase == "ROUND_OVER";
+        !game || game.phase !== "ROUND_OVER";
 }
 
 function refreshUI() {
