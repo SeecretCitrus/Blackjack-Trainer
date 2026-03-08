@@ -6,22 +6,32 @@ import { Simulator } from '../logic/Simulator.js';
 let game;
 
 function updateButtons() {
-    const noPlayer = !game || game.currentPlayer === null;
+    const nextRoundBtn = document.getElementById("nextRoundBtn");
 
-    document.getElementById("hitBtn").disabled = noPlayer;
-    document.getElementById("standBtn").disabled = noPlayer;
+    if (!game || game.currentPlayer === null) {
+        document.getElementById("hitBtn").disabled = true;
+        document.getElementById("standBtn").disabled = true;
+        document.getElementById("doubleBtn").disabled = true;
+        document.getElementById("splitBtn").disabled = true;
+
+        nextRoundBtn.disabled = !game || game.phase !== "ROUND_OVER";
+        return;
+    }
+
+    document.getElementById("hitBtn").disabled = false;
+    document.getElementById("standBtn").disabled = false;
 
     document.getElementById("doubleBtn").disabled =
-        noPlayer || !game.currentPlayer.canDouble(game.currentHandIndex);
+        !game.currentPlayer.canDouble(game.currentHandIndex);
 
     document.getElementById("splitBtn").disabled =
-        noPlayer || !game.currentPlayer.canSplit(game.currentHandIndex);
+        !game.currentPlayer.canSplit(game.currentHandIndex);
 
-    document.getElementById("nextRoundBtn").disabled =
-        !game || game.phase !== "ROUND_OVER";
+    nextRoundBtn.disabled = game.phase !== "ROUND_OVER";
 }
 
 function refreshUI() {
+    if (!game) return;
     renderGame(game);
     updateButtons();
 }
