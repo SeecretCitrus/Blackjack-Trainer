@@ -663,7 +663,7 @@ function renderGame() {
         for (let i = 0; i < dealerHand.cards.length; i++) {
 
             if (game.currentPlayer !== null && i === 1) {
-                dealerHTML += "🂠 ";
+                dealerHTML += "<br>🂠 ";
             } else {
                 dealerHTML += coloredCard(dealerHand.cards[i]) + " ";
             }
