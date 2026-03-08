@@ -13,27 +13,28 @@ A comprehensive blackjack training tool and simulator for learning perfect strat
 - **Visual Table Layout** - Clean casino-style interface with colored cards
 
 ## Directory Structure:
----
-├── 📁 engine
-│   ├── 📄 Card.js
-│   ├── 📄 Dealer.js
-│   ├── 📄 Game.js
-│   ├── 📄 Hand.js
-│   ├── 📄 Player.js
-│   ├── 📄 Rules.js
-│   └── 📄 Shoe.js
-├── 📁 logic
-│   ├── 📄 Simulator.js
-│   └── 📄 StrategyEngine.js
-├── 📁 ui
-│   ├── 📄 CardRenderer.js
-│   ├── 📄 Controls.js
-│   └── 📄 TableView.js
-├── 📄 index.html
-├── 📄 README.md
-├── 📄 script.js
-└── 📄 style.css
-
+```
+Blackjack-Trainer/
+├── README.md
+├── engine/
+│   ├── Card.js
+│   ├── Dealer.js
+│   ├── Game.js
+│   ├── Hand.js
+│   ├── Player.js
+│   ├── Rules.js
+│   └── Shoe.js
+├── index.html
+├── logic/
+│   ├── Simulator.js
+│   └── StrategyEngine.js
+├── script.js
+├── style.css
+└── ui/
+    ├── CardRenderer.js
+    ├── Controls.js
+    └── TableView.js
+```
 
 
 ## GitHub Website:
