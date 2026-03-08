@@ -95,6 +95,11 @@ function setupControls() {
     });
 
 
+
+    
+
+
+    updateButtons();
 }
 
 export { setupControls, updateButtons, handleManualAction };

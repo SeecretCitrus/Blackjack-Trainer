@@ -8,6 +8,15 @@
     width: 100%;
 }
 
+#startBtn {
+    background-color: yellow;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 body {
     font-family: Arial, sans-serif;
     background: radial-gradient(circle, #0f7a3a, #0b4d26);
