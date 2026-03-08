@@ -12,27 +12,29 @@ A comprehensive blackjack training tool and simulator for learning perfect strat
 - **Multi-Hand Support** - Practice splitting, doubling, and complex hand management
 - **Visual Table Layout** - Clean casino-style interface with colored cards
 
-## Project Structure
-├── engine/
-│ ├── Card.js
-│ ├── Dealer.js
-│ ├── Game.js
-│ ├── Hand.js
-│ ├── Player.js
-│ ├── Rules.js
-│ └── Shoe.js
-├── logic/
-│ ├── Simulator.js
-│ └── StrategyEngine.js
-├── ui/
-│ ├── CardRenderer.js
-│ ├── Controls.js
-│ └── TableView.js
-├── index.html
-├── script.js
-└── style.css
+## Directory Structure:
+---
+├── 📁 engine
+│   ├── 📄 Card.js
+│   ├── 📄 Dealer.js
+│   ├── 📄 Game.js
+│   ├── 📄 Hand.js
+│   ├── 📄 Player.js
+│   ├── 📄 Rules.js
+│   └── 📄 Shoe.js
+├── 📁 logic
+│   ├── 📄 Simulator.js
+│   └── 📄 StrategyEngine.js
+├── 📁 ui
+│   ├── 📄 CardRenderer.js
+│   ├── 📄 Controls.js
+│   └── 📄 TableView.js
+├── 📄 index.html
+├── 📄 README.md
+├── 📄 script.js
+└── 📄 style.css
 
-text
+
 
 ## GitHub Website:
 
