@@ -670,7 +670,7 @@ function renderGame() {
         }
 
         if (game.currentPlayer === null) {
-            dealerHTML += "<br>Total: " + dealerHand.getValue();
+            dealerHTML += "<br><span style='text-align: center;'>Total: " + dealerHand.getValue() + "</span>";
         }
     }
 
