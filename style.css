@@ -25,7 +25,6 @@ body {
 }
 
 /* Seat mapping */
-.dealerArea { grid-area: dealer; }
 .player8 {
     position: absolute;
     top: 5%;
@@ -90,6 +89,14 @@ body {
     top: 5%;
     left: 50%;
     transform: translateX(-50%);
+    background: linear-gradient(#1b7a43, #145a32);
+    padding: 12px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 220px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    text-align: center;
+
 }
 
 /* Hands */
