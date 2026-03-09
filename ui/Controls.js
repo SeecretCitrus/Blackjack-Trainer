@@ -22,10 +22,10 @@ function updateButtons() {
     document.getElementById("standBtn").disabled = false;
 
     document.getElementById("doubleBtn").disabled =
-        !game.currentPlayer.canDouble(game.currentHandIndex);
+        !game.currentPlayer.canDouble(game.currentHandIndex, game.rules);
 
     document.getElementById("splitBtn").disabled =
-        !game.currentPlayer.canSplit(game.currentHandIndex);
+        !game.currentPlayer.canSplit(game.currentHandIndex, game.rules);
 
     nextRoundBtn.disabled = game.phase !== "ROUND_OVER";
 }
