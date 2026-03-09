@@ -37,11 +37,15 @@ function refreshUI() {
 }
 
 function showTooltip(button, message) {
+    const rect = button.getBoundingClientRect();
     let tooltip = document.createElement("div");
     tooltip.className = "tooltip";
     tooltip.innerText = message;
-    button.appendChild(tooltip);
 
+    tooltip.style.position = "fixed";
+    tooltip.style.left = rect.left + rect.width / 2 + "px";
+    tooltip.style.top = rect.top - 30 + "px";
+    document.body.appendChild(tooltip);
     setTimeout(() => {
         tooltip.remove();
     }, 2000);

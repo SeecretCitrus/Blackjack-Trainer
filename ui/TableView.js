@@ -41,32 +41,28 @@ function renderGame(game) {
 
     //---------------- PLAYERS ----------------//
 
-    for (let i = 0; i < game.players.length; i++) {
+    let playersHTML = `<div id="playersContainer">`;
 
+    for (let i = 0; i < game.players.length; i++) {
         let player = game.players[i];
         let isCurrent = player === game.currentPlayer;
 
         let seatClass = "player" + (i + 1);
-
         let playerHTML = `
             <div class="playerArea ${seatClass}">
                 <h2>
                     ${player.name}
                     ${isCurrent ? "<br>YOUR TURN" : ""}
                 </h2>
-
                 <div class="playerHands">
         `;
-
         for (let h = 0; h < player.hands.length; h++) {
-
             let total = player.getHandValue(h);
             let isCurrentHand = isCurrent && h === game.currentHandIndex;
 
             playerHTML += `<div class="hand ${isCurrentHand ? "activeHand" : ""}">
                 <strong>Hand ${h+1} (Value: ${total})</strong><br>
             `;
-
             for (let card of player.hands[h].cards) {
                 playerHTML += renderCard(card);
             }
@@ -76,8 +72,11 @@ function renderGame(game) {
 
         playerHTML += `</div></div>`;
 
-        gameDiv.innerHTML += playerHTML;
+        playersHTML += playerHTML;
     }
+    playersHTML += "</div>";
+    gameDiv.innerHTML += playersHTML;
+
 }
 
 export { renderGame };
