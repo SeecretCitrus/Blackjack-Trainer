@@ -126,8 +126,14 @@ body {
     transform: translateY(-4px);
 }
 
-.card-top, .card-bottom {
+.card-top{
     font-size: 14px;
+    align-items: left;
+}
+
+.card-bottom {
+    font-size: 14px;
+    align-items: right;
 }
 
 .card-middle {
