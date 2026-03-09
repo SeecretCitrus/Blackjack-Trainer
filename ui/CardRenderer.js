@@ -29,4 +29,4 @@ function renderCard(card) {
     `;
 }
 
-export { suitSymbol, coloredCard };
+export { suitSymbol, renderCard };
