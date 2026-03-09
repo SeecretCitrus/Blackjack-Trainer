@@ -12,6 +12,12 @@ A comprehensive blackjack training tool and simulator for learning perfect strat
 - **Multi-Hand Support** - Practice splitting, doubling, and complex hand management
 - **Visual Table Layout** - Clean casino-style interface with colored cards
 
+## To add:
+- **Tables Displaying Simulation Info** - wins & losses with hand values.
+- **Side Bets** - lucky lucky, buster call, etc.
+- **Option to pick bots and players** - and fill/autoarrange seats.
+- **Money & bets** - 3:2 or 6:5 payout for blackjack.
+
 ## Directory Structure:
 ```
 Blackjack-Trainer/
@@ -36,12 +42,9 @@ Blackjack-Trainer/
     └── TableView.js
 ```
 
-
 ## GitHub Website:
 
 https://seecretcitrus.github.io/Blackjack-Trainer/
-
-
 
 ## How to Use
 Interactive Mode
