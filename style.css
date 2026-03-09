@@ -156,3 +156,8 @@ body {
     z-index: 100;
     pointer-events: none;
 }
+
+#holeCard {
+    background: linear-gradient(135deg, #333, #555);
+    color: white;
+}

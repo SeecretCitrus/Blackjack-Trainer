@@ -21,7 +21,7 @@ function renderGame(game) {
         for (let i = 0; i < dealerHand.cards.length; i++) {
 
             if (game.currentPlayer !== null && i === 1) {
-                dealerHTML += `<div class="card">🂠</div>`;
+                dealerHTML += `<div id="holeCard" class="card">Hole</div>`;
             } else {
                 dealerHTML += renderCard(dealerHand.cards[i]) + " ";
             }
