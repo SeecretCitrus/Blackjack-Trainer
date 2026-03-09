@@ -34,6 +34,7 @@ function refreshUI() {
     if (!game) return;
     renderGame(game);
     updateButtons();
+    highlightCorrectAction();
 }
 
 function showTooltip(button, message) {
@@ -127,5 +128,33 @@ function setupControls() {
 
     updateButtons();
 }
+
+function highlightCorrectAction() {
+
+    const trainer = document.getElementById("trainerToggle").checked;
+    if (!trainer || !game || game.phase !== "PLAYER_TURN") return;
+
+    const correct = StrategyEngine.getDecision(
+        game.currentPlayer,
+        game.currentHandIndex,
+        game.dealer.getUpCard(),
+        game.rules
+    );
+
+    const buttonMap = { H:"hitBtn", S:"standBtn", D:"doubleBtn", P:"splitBtn" };
+
+    for (let key in buttonMap) {
+        document.getElementById(buttonMap[key]).classList.remove("correctMove");
+    }
+
+    const btn = document.getElementById(buttonMap[correct]);
+    if (btn) btn.classList.add("correctMove");
+}
+
+
+
+
+
+
 
 export { setupControls, updateButtons, handleManualAction };

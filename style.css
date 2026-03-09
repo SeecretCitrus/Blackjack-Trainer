@@ -30,7 +30,6 @@ body {
     position: relative;
     width: 95vw;
     height: 70vh;
-    margin: auto;
 }
 
 /* Panels */
@@ -44,19 +43,16 @@ body {
     text-align: center;
 }
 
-#playersContainer {
-    position: absolute;
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
+.player1 { position:absolute; top:10%; right:5%; }
+.player2 { position:absolute; bottom:30%; right:10%; }
+.player3 { position:absolute; bottom:20%; right:25%; }
+.player4 { position:absolute; bottom:15%; right:40%; }
 
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
+.player5 { position:absolute; bottom:15%; left:40%; }
+.player6 { position:absolute; bottom:20%; left:25%; }
+.player7 { position:absolute; bottom:30%; left:10%; }
 
-    width: 90%;
-}
+.player8 { position:absolute; top:10%; left:5%; }
 
 .dealerArea {
     position: absolute;
@@ -76,20 +72,23 @@ body {
 /* Hands */
 .playerHands {
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap;
     justify-content: center;
+    gap: 8px;
 }
 
 .hand {
     background: rgba(0,0,0,0.25);
-    padding: 8px;
+    padding: 6px;
     border-radius: 8px;
-    min-width: 120px;
 
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
     justify-content: center;
+    gap: 4px;
+
+    min-width: 120px;
+    max-width: 180px;
 }
 
 .activeHand {
@@ -160,4 +159,9 @@ body {
 #holeCard {
     background: linear-gradient(135deg, #333, #555);
     color: white;
+}
+
+.correctMove {
+    box-shadow: 0 0 10px 3px gold;
+    border: 2px solid gold;
 }
