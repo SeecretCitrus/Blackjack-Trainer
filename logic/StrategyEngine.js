@@ -27,6 +27,16 @@ const S17SoftTable = {
     13 : {2: "H", 3: "H", 4: "H", 5: "D", 6: "D", 7: "H", 8: "H", 9: "H", 10: "H", 11: "H"},
 };
 
+const H17SoftTable = {//only {19 : 19} and {18 : 2} are different
+    19 : {2: "S", 3: "S", 4: "S", 5: "S", 6: "Ds", 7: "S", 8: "S", 9: "S", 10: "S", 11: "S"},
+    18 : {2: "Ds", 3: "Ds", 4: "Ds", 5: "Ds", 6: "Ds", 7: "S", 8: "S", 9: "H", 10: "H", 11: "H"},
+    17 : {2: "H", 3: "D", 4: "D", 5: "D", 6: "D", 7: "H", 8: "H", 9: "H", 10: "H", 11: "H"},
+    16 : {2: "H", 3: "H", 4: "D", 5: "D", 6: "D", 7: "H", 8: "H", 9: "H", 10: "H", 11: "H"},
+    15 : {2: "H", 3: "H", 4: "D", 5: "D", 6: "D", 7: "H", 8: "H", 9: "H", 10: "H", 11: "H"},
+    14 : {2: "H", 3: "H", 4: "H", 5: "D", 6: "D", 7: "H", 8: "H", 9: "H", 10: "H", 11: "H"},
+    13 : {2: "H", 3: "H", 4: "H", 5: "D", 6: "D", 7: "H", 8: "H", 9: "H", 10: "H", 11: "H"},
+};
+
 const SplitTable = {
     11 : {2: "Y", 3: "Y", 4: "Y", 5: "Y", 6: "Y", 7: "Y", 8: "Y", 9: "Y", 10: "Y", 11: "Y"},
     10 : {2: "N", 3: "N", 4: "N", 5: "N", 6: "N", 7: "N", 8: "N", 9: "N", 10: "N", 11: "N"},
@@ -41,49 +51,51 @@ const SplitTable = {
 };
 
 
+
 class StrategyEngine {
+    /**
+     * Returns the recommended action for a hand
+     * "H" = Hit, "S" = Stand, "D" = Double, "P" = Split
+     */
     static getDecision(player, handIndex, dealerUpCard, rules) {
-        let playerTotal = player.getHandValue(handIndex);
-        let dealerValue = dealerUpCard.getValue();
-        let isSoft = player.isSoftHand(handIndex);
-        if (player.hands[handIndex].isFinished) {
-            return "S"; // If the hand is already finished (e.g., split aces), always stand
-        }
+        const hand = player.hands[handIndex];
+        const playerTotal = player.getHandValue(handIndex);
+        const dealerValue = dealerUpCard.getValue();
+        const isSoft = player.isSoftHand(handIndex);
 
+        if (hand.isFinished) return "S"; // Finished hands always stand
+
+        // Check if split is possible
         if (player.canSplit(handIndex, rules)) {
-            const pairValue = player.hands[handIndex].cards[0].getValue();
-            if (SplitTable[pairValue]) {
-                const decision = SplitTable[pairValue][dealerValue];
-                if (decision === "Y" || decision === "Y/n") return "P";
-            }
+            const pairValue = hand.cards[0].getValue();
+            const splitDecision = SplitTable[pairValue]?.[dealerValue];
+            if (splitDecision === "Y" || splitDecision === "Y/n") return "P";
         }
 
+        // Select the proper table based on dealer rules
         let tableDecision;
-
         if (isSoft) {
-            if (S17SoftTable[playerTotal]) {
-                tableDecision = S17SoftTable[playerTotal][dealerValue];
-            }
+            const softTable = rules.dealerHitsSoft17 ? H17SoftTable : S17SoftTable;
+            tableDecision = softTable[playerTotal]?.[dealerValue];
         } else {
             const hardTable = rules.dealerHitsSoft17 ? H17HardTable : S17HardTable;
-            if (hardTable[playerTotal]) {
-                tableDecision = hardTable[playerTotal][dealerValue];
-            }
-        }
-        if (tableDecision === "D" || tableDecision === "Ds") {
-            if (player.canDouble(handIndex, rules)) {
-                return "D";
-            } else if (tableDecision === "Ds") {
-                return "S"; // If double is recommended but not allowed, stand if it's a "Ds" decision, otherwise hit
-            }
+            tableDecision = hardTable[playerTotal]?.[dealerValue];
         }
 
+        // Handle doubles
+        if (tableDecision === "D" || tableDecision === "Ds") {
+            if (player.canDouble(handIndex, rules)) return "D";
+            if (tableDecision === "Ds") return "S"; // Double not allowed on "Ds"
+        }
+
+        // Fallback logic for extreme totals
         if (isSoft && playerTotal >= 19) return "S";
         if (!isSoft && playerTotal >= 17) return "S";
         if (!isSoft && playerTotal <= 8) return "H";
 
-        return "H"; // Default to hit if no specific strategy is found
+        return tableDecision === "S" ? "S" : "H"; // Default to table decision or hit
     }
 }
+
 
 export { StrategyEngine };

@@ -54,6 +54,12 @@ function handleManualAction(action) {
 }
 
 function setupControls() {
+    document.getElementById("hitBtn").disabled = true;
+    document.getElementById("standBtn").disabled = true;
+    document.getElementById("doubleBtn").disabled = true;
+    document.getElementById("splitBtn").disabled = true;
+    document.getElementById("nextRoundBtn").disabled = true;
+    
     document.getElementById("startBtn").addEventListener("click", () => {
         console.log("Start button clicked");
 
@@ -96,7 +102,7 @@ function setupControls() {
 
 
 
-    
+
 
 
     updateButtons();
