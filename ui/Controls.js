@@ -36,6 +36,17 @@ function refreshUI() {
     updateButtons();
 }
 
+function showTooltip(button, message) {
+    let tooltip = document.createElement("div");
+    tooltip.className = "tooltip";
+    tooltip.innerText = message;
+    button.appendChild(tooltip);
+
+    setTimeout(() => {
+        tooltip.remove();
+    }, 2000);
+}
+
 function handleManualAction(action) {
     if (!game || game.phase !== "PLAYER_TURN") return;
     const correct = StrategyEngine.getDecision(
@@ -44,11 +55,18 @@ function handleManualAction(action) {
         game.dealer.getUpCard(),
         game.rules
     );
+
+    const buttonMap = { H: "hitBtn", S: "standBtn", D: "doubleBtn", P: "splitBtn" };
+    const btn = document.getElementById(buttonMap[action]);
+
     if (action !== correct) {
         console.log("✕ Mistake! Correct play was:", correct);
+        showTooltip(btn, `✕ Wrong! Correct: ${correct}`);
     } else {
         console.log("✓ Correct play.");
+        showTooltip(btn, `✓ Correct`);
     }
+
     game.handlePlayerAction(action);
     refreshUI();
 }
@@ -61,15 +79,13 @@ function setupControls() {
     document.getElementById("nextRoundBtn").disabled = true;
     
     document.getElementById("startBtn").addEventListener("click", () => {
-        console.log("Start button clicked");
+        const numDecks = parseInt(document.getElementById("numDecksSelect").value);
+        const S17 = document.getElementById("S17Select").value === "true";
+        const numPlayers = parseInt(document.getElementById("numPlayersSelect").value);
 
-        game = new Game(4, 6, "manual", false);
+        game = new Game(numPlayers, numDecks, "manual", S17);
 
         game.startRound();
-
-        console.log("Game phase:", game.phase);
-        console.log("Current player:", game.currentPlayer);
-
         refreshUI();
     });
 

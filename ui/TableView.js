@@ -1,4 +1,4 @@
-import { coloredCard } from './CardRenderer.js';
+import { renderCard } from './CardRenderer.js';
 
 function renderGame(game) {
     const gameDiv = document.getElementById("game");
@@ -23,7 +23,7 @@ function renderGame(game) {
             if (game.currentPlayer !== null && i === 1) {
                 dealerHTML += "🂠 ";
             } else {
-                dealerHTML += coloredCard(dealerHand.cards[i]) + " ";
+                dealerHTML += renderCard(dealerHand.cards[i]) + " ";
             }
         }
 
@@ -68,7 +68,7 @@ function renderGame(game) {
             `;
 
             for (let card of player.hands[h].cards) {
-                playerHTML += coloredCard(card) + "<br>";
+                playerHTML += renderCard(card) + "<br>";
             }
 
             playerHTML += "</div>";

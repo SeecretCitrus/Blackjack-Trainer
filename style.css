@@ -137,3 +137,44 @@ body {
     gap: 8px;
     padding-top: 6px;
 }
+
+.card {
+    width: 60px;
+    height: 90px;
+    background: white;
+    color: black;
+    border-radius: 8px;
+    border: 1px solid #333;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 4px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+    font-weight: bold;
+}
+
+.card-top, .card-bottom {
+    font-size: 14px;
+}
+
+.card-middle {
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tooltip {
+    position: absolute;
+    background: rgba(255,255,0,0.9);
+    color: black;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    pointer-events: none;
+}

@@ -50,6 +50,20 @@ const SplitTable = {
     2 : {2: "Y/n", 3: "Y/n", 4: "Y", 5: "Y", 6: "Y", 7: "Y", 8: "H", 9: "H", 10: "H", 11: "H"},
 };
 
+//to be implemented later if we want to add late surrender option
+// const H17SurrenderTable = {
+//     17 : {11: "Y"},
+//     16 : {9 : "Y", 10: "Y", 11: "Y"},
+//     15 : {10: "Y", 11: "Y"},
+//     8,8 : {11: "Y"}, //somehow fix this later so double eats are detected
+// };
+
+// const S17SurrenderTable = {
+//     16 : {9 : "Y", 10: "Y", 11: "Y"},
+//     15 : {10: "Y"},
+// };
+
+// never accept insurance or even money.
 
 
 class StrategyEngine {
