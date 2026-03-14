@@ -39,8 +39,7 @@ h1 {
 #bj-table {
     position: relative;
     width: 100%;
-    max-width: 900px;
-    padding-bottom: 65%;          /* aspect-ratio lock */
+    padding-bottom: 42%;          /* aspect-ratio lock — wide & short */
     background: radial-gradient(ellipse 80% 80% at 50% 38%, #2a8a50, #1a6b3a 60%, #0d4422);
     border-radius: 50% 50% 46% 46% / 28% 28% 20% 20%;
     border: 7px solid #7a5230;
@@ -110,17 +109,17 @@ h1 {
    CARDS
 ====================================================== */
 .card {
-    width: 36px;
-    height: 52px;
+    width: 54px;
+    height: 76px;
     background: #fff;
-    border-radius: 4px;
+    border-radius: 5px;
     border: 1px solid #bbb;
     position: relative;
     box-shadow: 1px 2px 5px rgba(0,0,0,0.45);
-    font-size: 10px;
+    font-size: 13px;
     font-weight: bold;
     flex-shrink: 0;
-    padding: 2px 3px;
+    padding: 3px 4px;
     transition: transform 0.15s ease;
 }
 
@@ -137,14 +136,14 @@ h1 {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 15px;
+    font-size: 22px;
 }
 
 .card .card-bottom {
     position: absolute;
-    bottom: 2px;
-    right: 3px;
-    font-size: 10px;
+    bottom: 3px;
+    right: 4px;
+    font-size: 13px;
     transform: rotate(180deg);
     line-height: 1.1;
 }
@@ -177,13 +176,13 @@ h1 {
 }
 
 /* 7 fixed arc positions */
-.seat.s1 { left:  7%; top: 88%; }
-.seat.s2 { left: 20%; top: 96%; }
-.seat.s3 { left: 33%; top: 99%; }
-.seat.s4 { left: 50%; top: 100%; }
-.seat.s5 { left: 67%; top: 99%; }
-.seat.s6 { left: 80%; top: 96%; }
-.seat.s7 { left: 93%; top: 88%; }
+.seat.s1 { left:  7%; top: 82%; }
+.seat.s2 { left: 20%; top: 90%; }
+.seat.s3 { left: 33%; top: 94%; }
+.seat.s4 { left: 50%; top: 95%; }
+.seat.s5 { left: 67%; top: 94%; }
+.seat.s6 { left: 80%; top: 90%; }
+.seat.s7 { left: 93%; top: 82%; }
 
 .seat-name {
     font-size: 7px;
@@ -283,7 +282,7 @@ h1 {
 }
 
 .cards .card {
-    margin-left: -11px;
+    margin-left: -18px;
 }
 
 .cards .card:first-child {
