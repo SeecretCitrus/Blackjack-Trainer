@@ -1,20 +1,8 @@
-#tableWrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    flex: 1;
-    width: 100%;
-}
-
-#startBtn {
-    background-color: yellow;
-}
-
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+/* ======================================================
+   GLOBAL
+====================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
 body {
@@ -22,164 +10,383 @@ body {
     background: radial-gradient(circle, #0f7a3a, #0b4d26);
     color: white;
     margin: 0;
+    padding: 0;
     overflow: auto;
 }
 
-/* Casino Table Container */
-#game {
+h1 {
+    text-align: center;
+    margin: 12px 0 8px;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: rgba(255, 215, 0, 0.85);
+}
+
+/* ======================================================
+   OUTER WRAPPER
+====================================================== */
+#tableWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0 12px 24px;
+}
+
+/* ======================================================
+   TABLE
+====================================================== */
+#bj-table {
     position: relative;
-    width: 95vw;
-    height: 70vh;
+    width: 100%;
+    max-width: 900px;
+    padding-bottom: 65%;          /* aspect-ratio lock */
+    background: radial-gradient(ellipse 80% 80% at 50% 38%, #2a8a50, #1a6b3a 60%, #0d4422);
+    border-radius: 50% 50% 46% 46% / 28% 28% 20% 20%;
+    border: 7px solid #7a5230;
+    box-shadow:
+        inset 0 0 50px rgba(0,0,0,0.45),
+        0 0 0 3px #b8895a,
+        0 10px 40px rgba(0,0,0,0.6);
+    overflow: hidden;
 }
 
-/* Panels */
-.playerArea{
-    background: linear-gradient(#1b7a43,#145a32);
-    padding:10px;
-    border-radius:10px;
-    min-width:140px;
-    max-width:240px;
-
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    box-shadow: 0 0 10px rgba(0,0,0,0.4);
-}
-
-.dealerArea{
-    position:absolute;
-    top:3%;
-    left:50%;
-    transform:translateX(-50%);
-
-    background: linear-gradient(#1b7a43,#145a32);
-    padding:12px;
-    border-radius:10px;
-
-    width:180px;
-}
-
-/* Hands */
-.playerHands {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-}
-
-.hand{
-    background:rgba(0,0,0,0.25);
-    padding:6px;
-    border-radius:8px;
-
-    display:flex;
-    flex-direction:column-reverse;
-    align-items:center;
-
-    max-width:160px;
-}
-
-.activeHand {
-    border: 3px solid gold;
-}
-
-.cardSymbol {
-    font-size: 22px;
-    font-weight: bold;
-}
-
-.dealerBox {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-}
-
-.card{
-    width:60px;
-    height:90px;
-
-    background:white;
-    border-radius:8px;
-    border:1px solid #333;
-
-    position:relative;
-    font-weight:bold;
-}
-
-.card:hover {
-    transform: translateY(-6px);
-}
-
-.card-top{
-    position:absolute;
-    top:3px;
-    left:5px;
-    font-size:14px;
-}
-
-.card-bottom{
-    position:absolute;
-    bottom:3px;
-    right:5px;
-    font-size:14px;
-    transform:rotate(180deg);
-}
-
-.card-middle{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    font-size:28px;
-}
-
-.tooltip {
+.rail-inner {
     position: absolute;
-    background: rgba(255,255,0,0.9);
-    color: black;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    top: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
+    inset: 6px;
+    border-radius: 50% 50% 46% 46% / 28% 28% 20% 20%;
+    border: 1.5px solid rgba(255,255,255,0.07);
     pointer-events: none;
 }
 
-#holeCard {
-    background: linear-gradient(135deg, #333, #555);
-    color: white;
+/* Felt inscription */
+.inscription {
+    position: absolute;
+    top: 36%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: rgba(255, 215, 0, 0.22);
+    font-size: 10px;
+    letter-spacing: 2px;
+    line-height: 1.9;
+    pointer-events: none;
+    white-space: nowrap;
 }
 
+/* ======================================================
+   DEALER
+====================================================== */
+#dealer-zone {
+    position: absolute;
+    top: 4%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.dealer-label {
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+}
+
+.dealer-cards {
+    display: flex;
+    gap: 4px;
+}
+
+.dealer-total {
+    font-size: 10px;
+    color: rgba(255, 255, 220, 0.65);
+    letter-spacing: 1px;
+}
+
+/* ======================================================
+   CARDS
+====================================================== */
+.card {
+    width: 36px;
+    height: 52px;
+    background: #fff;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    position: relative;
+    box-shadow: 1px 2px 5px rgba(0,0,0,0.45);
+    font-size: 10px;
+    font-weight: bold;
+    flex-shrink: 0;
+    padding: 2px 3px;
+    transition: transform 0.15s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+.card .card-top {
+    line-height: 1.1;
+}
+
+.card .card-middle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 15px;
+}
+
+.card .card-bottom {
+    position: absolute;
+    bottom: 2px;
+    right: 3px;
+    font-size: 10px;
+    transform: rotate(180deg);
+    line-height: 1.1;
+}
+
+.card.red  .card-top, .card.red  .card-middle, .card.red  .card-bottom { color: #c0392b; }
+.card.black .card-top, .card.black .card-middle, .card.black .card-bottom { color: #111; }
+
+/* Hole card (face-down) */
+#holeCard,
+.card.hole {
+    background: repeating-linear-gradient(
+        135deg,
+        #2a2a2a, #2a2a2a 4px,
+        #444 4px, #444 8px
+    );
+    color: transparent;
+}
+
+/* ======================================================
+   SEATS  — anchor is bottom-center (transform: translate(-50%,-100%))
+   so panels grow upward from their % position
+====================================================== */
+.seat {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transform: translate(-50%, -100%);
+}
+
+/* 7 fixed arc positions */
+.seat.s1 { left:  7%; top: 88%; }
+.seat.s2 { left: 20%; top: 96%; }
+.seat.s3 { left: 33%; top: 99%; }
+.seat.s4 { left: 50%; top: 100%; }
+.seat.s5 { left: 67%; top: 99%; }
+.seat.s6 { left: 80%; top: 96%; }
+.seat.s7 { left: 93%; top: 88%; }
+
+.seat-name {
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+}
+
+/* ======================================================
+   SEAT PANEL
+====================================================== */
+.seat-panel {
+    background: rgba(0,0,0,0.32);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 7px;
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.seat-panel.active {
+    border-color: gold;
+    box-shadow: 0 0 12px rgba(255,215,0,0.5);
+}
+
+.seat-panel.empty {
+    opacity: 0.3;
+    min-width: 52px;
+}
+
+.seat-label {
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.38);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.seat-label.your-turn {
+    color: gold;
+}
+
+/* Betting circle */
+.bet-ring {
+    width: 28px;
+    height: 15px;
+    border: 1.5px solid rgba(255, 215, 0, 0.3);
+    border-radius: 50%;
+}
+
+.bet-ring.dim {
+    border-color: rgba(255,255,255,0.1);
+}
+
+/* ======================================================
+   HANDS ROW  (side-by-side for splits)
+====================================================== */
+.playerHands {
+    display: flex;
+    flex-direction: row;
+    gap: 3px;
+    align-items: flex-start;
+}
+
+/* Individual hand block */
+.hand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 4px;
+    padding: 2px 3px;
+    border: 1px solid transparent;
+}
+
+.hand.activeHand {
+    border-color: gold;
+    box-shadow: 0 0 6px rgba(255,215,0,0.45);
+}
+
+.hand.finishedHand {
+    opacity: 0.5;
+}
+
+.hand .handHeader {
+    font-size: 8px;
+    color: rgba(255,255,220,0.8);
+    white-space: nowrap;
+}
+
+/* Cards within a hand — overlap slightly */
+.cards {
+    display: flex;
+}
+
+.cards .card {
+    margin-left: -11px;
+}
+
+.cards .card:first-child {
+    margin-left: 0;
+}
+
+/* ======================================================
+   ROUND RESULT OVERLAY
+====================================================== */
+.round-over-badge {
+    font-size: 9px;
+    color: rgba(255,215,0,0.8);
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+/* ======================================================
+   GAME SETTINGS
+====================================================== */
+#gameSettings {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 14px 0 6px;
+    font-size: 13px;
+}
+
+#gameSettings label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255,255,255,0.8);
+}
+
+#gameSettings select {
+    background: rgba(0,0,0,0.4);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+/* ======================================================
+   CONTROLS
+====================================================== */
+#controls {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+button {
+    font-size: 13px;
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+}
+
+button:hover:not(:disabled) {
+    background: rgba(255,255,255,0.15);
+}
+
+button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+#startBtn {
+    border-color: rgba(255,215,0,0.55);
+    color: gold;
+    background: rgba(255,215,0,0.1);
+}
+
+#nextRoundBtn {
+    border-color: rgba(255,215,0,0.4);
+    color: rgba(255,215,0,0.85);
+}
+
+/* Trainer highlight */
 .correctMove {
     box-shadow: 0 0 10px 3px gold;
-    border: 2px solid gold;
+    border-color: gold !important;
 }
 
-#playersContainer{
-    position:absolute;
-    bottom:5%;
-    left:50%;
-    transform:translateX(-50%);
-
-    width:90%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:20px;
-    flex-wrap:wrap;
-}
-
-
-.cards{
-    display:flex;
-    position:relative;
-}
-.cards .card{
-    margin-left:-25px;
-}
-
-.cards .card:first-child{
-    margin-left:0;
+/* ======================================================
+   TOOLTIP
+====================================================== */
+.tooltip {
+    position: fixed;
+    background: rgba(255,255,0,0.92);
+    color: black;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 999;
+    transform: translateX(-50%);
 }

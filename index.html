@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Blackjack Trainer</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-<h1 style="text-align: center;">Blackjack Trainer</h1>
+<h1>Blackjack Trainer</h1>
 
 <div id="tableWrapper">
 
-    <div id="game"></div>
+    <div id="bj-table"></div>
 
     <div id="gameSettings">
-        <label>Number of Decks:
+        <label>Decks:
             <select id="numDecksSelect">
                 <option value="1">1</option>
                 <option value="2">2</option>
@@ -28,14 +27,14 @@
             </select>
         </label>
 
-        <label>Dealer Stands Soft 17:
+        <label>Dealer Soft 17:
             <select id="S17Select">
-                <option value="false">Yes (S17)</option>
-                <option value="true" selected>No (H17)</option>
+                <option value="false">Stand (S17)</option>
+                <option value="true" selected>Hit (H17)</option>
             </select>
         </label>
 
-        <label>Number of Players:
+        <label>Players:
             <select id="numPlayersSelect">
                 <option value="1" selected>1</option>
                 <option value="2">2</option>
@@ -44,18 +43,14 @@
                 <option value="5">5</option>
                 <option value="6">6</option>
                 <option value="7">7</option>
-                <option value="8">8</option>
             </select>
         </label>
-        
+
         <label>
             <input type="checkbox" id="trainerToggle">
             Show Correct Move
         </label>
-    
-    
     </div>
-    
 
     <div id="controls">
         <button id="startBtn">Start Game</button>
@@ -63,14 +58,12 @@
         <button id="standBtn">Stand</button>
         <button id="doubleBtn">Double</button>
         <button id="splitBtn">Split</button>
-        <button id="simulateBtn">Simulation</button>
+        <button id="simulateBtn">Simulate</button>
         <button id="nextRoundBtn">Next Round</button>
     </div>
 
 </div>
 
 <script src="script.js" type="module"></script>
-
 </body>
-
 </html>
