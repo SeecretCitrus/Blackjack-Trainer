@@ -37,7 +37,8 @@ body {
     background: linear-gradient(#1b7a43,#145a32);
     padding:10px;
     border-radius:10px;
-    width:140px;
+    min-width:140px;
+    max-width:240px;
 
     display:flex;
     flex-direction:column;
@@ -47,7 +48,7 @@ body {
 
 .dealerArea{
     position:absolute;
-    top:8%;
+    top:3%;
     left:50%;
     transform:translateX(-50%);
 
@@ -165,7 +166,7 @@ body {
     width:90%;
     display:flex;
     justify-content:center;
-    align-items:flex-end;
+    align-items:center;
     gap:20px;
     flex-wrap:wrap;
 }
@@ -176,7 +177,7 @@ body {
     position:relative;
 }
 .cards .card{
-    margin-left:-40px;
+    margin-left:-25px;
 }
 
 .cards .card:first-child{
