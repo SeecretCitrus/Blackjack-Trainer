@@ -34,39 +34,28 @@ body {
 
 /* Panels */
 .playerArea{
-    background: linear-gradient(#1b7a43, #145a32);
-    padding: 12px;
-    border-radius: 10px;
-    width: 100%;
-    max-width: 200px;
+    background: linear-gradient(#1b7a43,#145a32);
+    padding:10px;
+    border-radius:10px;
+    width:140px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
     box-shadow: 0 0 10px rgba(0,0,0,0.4);
-    text-align: center;
 }
 
-.player1 { position:absolute; top:10%; right:5%; }
-.player2 { position:absolute; bottom:30%; right:10%; }
-.player3 { position:absolute; bottom:20%; right:25%; }
-.player4 { position:absolute; bottom:15%; right:40%; }
+.dealerArea{
+    position:absolute;
+    top:8%;
+    left:50%;
+    transform:translateX(-50%);
 
-.player5 { position:absolute; bottom:15%; left:40%; }
-.player6 { position:absolute; bottom:20%; left:25%; }
-.player7 { position:absolute; bottom:30%; left:10%; }
+    background: linear-gradient(#1b7a43,#145a32);
+    padding:12px;
+    border-radius:10px;
 
-.player8 { position:absolute; top:10%; left:5%; }
-
-.dealerArea {
-    position: absolute;
-    top: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(#1b7a43, #145a32);
-    padding: 12px;
-    border-radius: 10px;
-    width: 100%;
-    max-width: 220px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.4);
-    text-align: center;
-
+    width:180px;
 }
 
 /* Hands */
@@ -77,18 +66,16 @@ body {
     gap: 8px;
 }
 
-.hand {
-    background: rgba(0,0,0,0.25);
-    padding: 6px;
-    border-radius: 8px;
+.hand{
+    background:rgba(0,0,0,0.25);
+    padding:6px;
+    border-radius:8px;
 
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 
-    min-width: 120px;
-    max-width: 180px;
+    max-width:160px;
 }
 
 .activeHand {
@@ -106,40 +93,43 @@ body {
     gap: 6px;
 }
 
-.card {
-    width: 60px;
-    height: 90px;
-    background: white;
-    color: black;
-    border-radius: 8px;
-    border: 1px solid #333;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 4px;
-    font-weight: bold;
-    transition: transform 0.15s;
+.card{
+    width:60px;
+    height:90px;
+
+    background:white;
+    border-radius:8px;
+    border:1px solid #333;
+
+    position:relative;
+    font-weight:bold;
 }
 
 .card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
 }
 
 .card-top{
-    font-size: 14px;
-    align-items: left;
+    position:absolute;
+    top:3px;
+    left:5px;
+    font-size:14px;
 }
 
-.card-bottom {
-    font-size: 14px;
-    align-items: right;
+.card-bottom{
+    position:absolute;
+    bottom:3px;
+    right:5px;
+    font-size:14px;
+    transform:rotate(180deg);
 }
 
-.card-middle {
-    font-size: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.card-middle{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:28px;
 }
 
 .tooltip {
@@ -164,4 +154,31 @@ body {
 .correctMove {
     box-shadow: 0 0 10px 3px gold;
     border: 2px solid gold;
+}
+
+#playersContainer{
+    position:absolute;
+    bottom:5%;
+    left:50%;
+    transform:translateX(-50%);
+
+    width:90%;
+    display:flex;
+    justify-content:center;
+    align-items:flex-end;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+
+.cards{
+    display:flex;
+    position:relative;
+}
+.cards .card{
+    margin-left:-40px;
+}
+
+.cards .card:first-child{
+    margin-left:0;
 }
