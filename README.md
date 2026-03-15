@@ -96,3 +96,9 @@ No surrender option
 Basic strategy feedback only shows in console
 
 Card counting features planned but not implemented
+
+# NEEDS:
+
+- no action after split aces
+- double after split choice
+- bots
