@@ -149,6 +149,8 @@ function highlightCorrectAction() {
 
     const btn = document.getElementById(buttonMap[correct]);
     if (btn) btn.classList.add("correctMove");
+
+    refreshUI();
 }
 
 
