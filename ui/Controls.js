@@ -82,14 +82,13 @@ function setupControls() {
     document.getElementById("doubleBtn").disabled = true;
     document.getElementById("splitBtn").disabled = true;
     document.getElementById("nextRoundBtn").disabled = true;
-    
+
     document.getElementById("startBtn").addEventListener("click", () => {
         const numDecks = parseInt(document.getElementById("numDecksSelect").value);
         const S17 = document.getElementById("S17Select").value === "true";
         const numPlayers = parseInt(document.getElementById("numPlayersSelect").value);
 
         game = new Game(numPlayers, numDecks, "manual", S17);
-
         game.startRound();
         refreshUI();
     });
@@ -118,18 +117,23 @@ function setupControls() {
         if (!game || game.phase !== "ROUND_OVER") return;
         game.startRound();
         refreshUI();
-
     });
 
-
-
-
-
+    // Fix 1: toggling the checkbox mid-game immediately updates the highlight
+    document.getElementById("trainerToggle").addEventListener("change", () => {
+        refreshUI();
+    });
 
     updateButtons();
 }
 
 function highlightCorrectAction() {
+    const buttonMap = { H: "hitBtn", S: "standBtn", D: "doubleBtn", P: "splitBtn" };
+
+    // Fix 2: always clear highlights first, whether trainer is on or off
+    for (let key in buttonMap) {
+        document.getElementById(buttonMap[key]).classList.remove("correctMove");
+    }
 
     const trainer = document.getElementById("trainerToggle").checked;
     if (!trainer || !game || game.phase !== "PLAYER_TURN") return;
@@ -141,22 +145,8 @@ function highlightCorrectAction() {
         game.rules
     );
 
-    const buttonMap = { H:"hitBtn", S:"standBtn", D:"doubleBtn", P:"splitBtn" };
-
-    for (let key in buttonMap) {
-        document.getElementById(buttonMap[key]).classList.remove("correctMove");
-    }
-
     const btn = document.getElementById(buttonMap[correct]);
     if (btn) btn.classList.add("correctMove");
-
-    refreshUI();
 }
-
-
-
-
-
-
 
 export { setupControls, updateButtons, handleManualAction };
