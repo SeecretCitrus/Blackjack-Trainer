@@ -422,3 +422,71 @@ button:disabled {
     opacity: 1;
     padding: 10px 16px;
 }
+
+/* ======================================================
+   CARD SCALING BY PLAYER COUNT
+   data-players attribute set on #bj-table by Controls.js
+====================================================== */
+#bj-table[data-players="1"] .card { width: 90px; height: 126px; font-size: 20px; border-radius: 7px; }
+#bj-table[data-players="1"] .card .card-middle { font-size: 36px; }
+#bj-table[data-players="1"] .card .card-bottom { font-size: 20px; }
+#bj-table[data-players="1"] .cards .card { margin-left: -28px; }
+
+#bj-table[data-players="2"] .card { width: 76px; height: 108px; font-size: 17px; border-radius: 6px; }
+#bj-table[data-players="2"] .card .card-middle { font-size: 30px; }
+#bj-table[data-players="2"] .card .card-bottom { font-size: 17px; }
+#bj-table[data-players="2"] .cards .card { margin-left: -24px; }
+
+#bj-table[data-players="3"] .card { width: 68px; height: 96px; font-size: 15px; border-radius: 6px; }
+#bj-table[data-players="3"] .card .card-middle { font-size: 27px; }
+#bj-table[data-players="3"] .card .card-bottom { font-size: 15px; }
+#bj-table[data-players="3"] .cards .card { margin-left: -22px; }
+
+#bj-table[data-players="4"] .card { width: 62px; height: 88px; font-size: 14px; border-radius: 5px; }
+#bj-table[data-players="4"] .card .card-middle { font-size: 24px; }
+#bj-table[data-players="4"] .card .card-bottom { font-size: 14px; }
+#bj-table[data-players="4"] .cards .card { margin-left: -20px; }
+
+/* 5-7 players use the default .card sizing already defined above */
+
+/* ======================================================
+   BOT SEAT INDICATOR
+====================================================== */
+.seat-label.is-bot { color: rgba(150, 200, 255, 0.9); }
+.bot-badge {
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: rgba(150, 200, 255, 0.6);
+    text-transform: uppercase;
+}
+
+/* ======================================================
+   BOT SETTINGS ROW
+====================================================== */
+#botSettings {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+}
+
+#botSettings label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 5px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+#botSettings label:hover { border-color: rgba(150,200,255,0.4); }
+
+#botSettings input[type="checkbox"]:checked + span {
+    color: rgba(150, 200, 255, 0.95);
+}

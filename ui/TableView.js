@@ -1,22 +1,19 @@
 import { renderCard } from './CardRenderer.js';
 
 // ======================================================
-// All 7 arc positions available, left to right.
-// Players are always centered across the arc — we pick
-// a symmetric subset of these positions based on player count.
+// All 7 arc positions, left to right.
+// Players are always centered — we pick a symmetric subset.
 // ======================================================
 const ALL_POSITIONS = [
-    { left:  7, top: 78 },   // 0 — far left
-    { left: 20, top: 86 },   // 1
-    { left: 33, top: 90 },   // 2
-    { left: 50, top: 91 },   // 3 — center
-    { left: 67, top: 90 },   // 4
-    { left: 80, top: 86 },   // 5
-    { left: 93, top: 78 },   // 6 — far right
+    { left:  7, top: 78 },
+    { left: 20, top: 86 },
+    { left: 33, top: 90 },
+    { left: 50, top: 91 },
+    { left: 67, top: 90 },
+    { left: 80, top: 86 },
+    { left: 93, top: 78 },
 ];
 
-// For each player count 1–7, which position indices to use.
-// Always symmetric and centered around index 3 (50% left).
 const SEAT_LAYOUTS = {
     1: [3],
     2: [2, 4],
@@ -29,7 +26,8 @@ const SEAT_LAYOUTS = {
 
 const MAX_SEATS = 7;
 
-function renderGame(game) {
+// botSeats is an optional array: botSeats[playerIndex] = true|false
+function renderGame(game, botSeats = []) {
     const tableEl = document.getElementById('bj-table');
     if (!tableEl) return;
 
@@ -51,14 +49,13 @@ function renderGame(game) {
     const numPlayers = game.players.length;
     const layout = SEAT_LAYOUTS[Math.min(numPlayers, MAX_SEATS)];
 
-    // layout is ordered left-to-right visually.
-    // Players are assigned right-to-left (Player 1 at far right = last layout entry).
     layout.forEach((posIndex, layoutSlot) => {
-        // Reverse: slot 0 (leftmost visual) = highest player index
+        // Reverse: leftmost visual slot = highest player index
         const playerIndex = numPlayers - 1 - layoutSlot;
         const player = game.players[playerIndex] ?? null;
-        const pos = ALL_POSITIONS[posIndex];
-        const seatEl = buildSeat(posIndex, player, game);
+        const isBot  = botSeats[playerIndex] === true;
+        const pos    = ALL_POSITIONS[posIndex];
+        const seatEl = buildSeat(posIndex, player, playerIndex, game, isBot);
         seatEl.style.left = pos.left + '%';
         seatEl.style.top  = pos.top  + '%';
         tableEl.appendChild(seatEl);
@@ -116,9 +113,8 @@ function buildDealerZone(game) {
 // ======================================================
 // Individual seat
 // ======================================================
-function buildSeat(posIndex, player, game) {
+function buildSeat(posIndex, player, playerIndex, game, isBot) {
     const seat = document.createElement('div');
-    // Use posIndex+1 for the CSS class so it still maps to s1–s7
     seat.className = 'seat s' + (posIndex + 1);
 
     const nameEl = document.createElement('div');
@@ -138,15 +134,31 @@ function buildSeat(posIndex, player, game) {
     const isCurrentPlayer = player === game.currentPlayer;
     panel.className = 'seat-panel' + (isCurrentPlayer ? ' active' : '');
 
+    // Label row
     const labelEl = document.createElement('div');
-    labelEl.className = 'seat-label' + (isCurrentPlayer ? ' your-turn' : '');
-    labelEl.textContent = isCurrentPlayer ? '▶ Your Turn' : player.name;
+    if (isBot) {
+        labelEl.className = 'seat-label is-bot';
+        labelEl.textContent = isCurrentPlayer ? '⚙ Playing...' : player.name;
+    } else {
+        labelEl.className = 'seat-label' + (isCurrentPlayer ? ' your-turn' : '');
+        labelEl.textContent = isCurrentPlayer ? '▶ Your Turn' : player.name;
+    }
     panel.appendChild(labelEl);
 
+    // Bot badge
+    if (isBot) {
+        const badge = document.createElement('div');
+        badge.className = 'bot-badge';
+        badge.textContent = 'BOT';
+        panel.appendChild(badge);
+    }
+
+    // Betting ring
     const ring = document.createElement('div');
     ring.className = 'bet-ring';
     panel.appendChild(ring);
 
+    // Hands
     const handsRow = document.createElement('div');
     handsRow.className = 'playerHands';
 
@@ -161,7 +173,7 @@ function buildSeat(posIndex, player, game) {
 }
 
 // ======================================================
-// Individual hand block (one per split hand)
+// Individual hand block
 // ======================================================
 function buildHand(hand, isActive) {
     const block = document.createElement('div');
