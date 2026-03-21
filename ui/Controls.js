@@ -119,9 +119,9 @@ function setupControls() {
         refreshUI();
     });
 
-    // Fix 1: toggling the checkbox mid-game immediately updates the highlight
+    // Fix 1: toggling the checkbox mid-game only updates highlights, not the full UI
     document.getElementById("trainerToggle").addEventListener("change", () => {
-        refreshUI();
+        highlightCorrectAction();
     });
 
     updateButtons();
@@ -137,6 +137,8 @@ function highlightCorrectAction() {
 
     const trainer = document.getElementById("trainerToggle").checked;
     if (!trainer || !game || game.phase !== "PLAYER_TURN") return;
+    if (!game.currentPlayer) return;
+    if (!game.currentPlayer.hands[game.currentHandIndex]) return;
 
     const correct = StrategyEngine.getDecision(
         game.currentPlayer,
