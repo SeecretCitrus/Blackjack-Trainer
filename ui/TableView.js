@@ -44,7 +44,9 @@ function renderGame(game) {
     // ---- Player seats ----
     // Fill up to MAX_SEATS; active players get their data, the rest show as empty
     for (let seatIndex = 0; seatIndex < MAX_SEATS; seatIndex++) {
-        const player = game.players[seatIndex] ?? null;
+        // Reverse mapping: seat 0 (far left) = last player, seat 6 (far right) = Player 1
+        const playerIndex = MAX_SEATS - 1 - seatIndex;
+        const player = game.players[playerIndex] ?? null;
         const pos = SEAT_POSITIONS[seatIndex];
         const seatEl = buildSeat(seatIndex, player, game);
         seatEl.style.left = pos.left + '%';
