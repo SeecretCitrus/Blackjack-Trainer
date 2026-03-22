@@ -21,8 +21,8 @@ class Game {
         this.silent  = mode === "automatic";
         this.maxSplits = 3;
 
-        this.penetrationMax = 75;
-        this.penetrationMin = 60;
+        this.penetrationMax = 80;
+        this.penetrationMin = 65;
         this.penetration    = (Math.random() * (this.penetrationMax - this.penetrationMin + 1) + this.penetrationMin) / 100;
         this.startingDeckSize = numDecks * 52;
 

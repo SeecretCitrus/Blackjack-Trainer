@@ -60,7 +60,7 @@ h1 {
 
 .inscription {
     position: absolute;
-    top: 65%;
+    top: 58%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
@@ -157,11 +157,11 @@ h1 {
    TABLE HEIGHT BY PLAYER COUNT
    Fewer players = bigger cards = more vertical space needed
 ====================================================== */
-#bj-table[data-players="1"] { height: 58vh; }
-#bj-table[data-players="2"] { height: 54vh; }
-#bj-table[data-players="3"] { height: 52vh; }
-#bj-table[data-players="4"] { height: 50vh; }
-#bj-table[data-players="5"] { height: 48vh; }
+#bj-table[data-players="1"] { height: 62vh; }
+#bj-table[data-players="2"] { height: 58vh; }
+#bj-table[data-players="3"] { height: 55vh; }
+#bj-table[data-players="4"] { height: 52vh; }
+#bj-table[data-players="5"] { height: 50vh; }
 
 /* ======================================================
    CARD SCALING BY PLAYER COUNT
@@ -169,22 +169,22 @@ h1 {
 #bj-table[data-players="1"] .card { width: 90px; height: 126px; font-size: 20px; border-radius: 7px; }
 #bj-table[data-players="1"] .card .card-middle { font-size: 36px; }
 #bj-table[data-players="1"] .card .card-bottom { font-size: 20px; }
-#bj-table[data-players="1"] .cards .card { margin-left: -28px; }
+/* player 1 card overlap handled by JS */
 
 #bj-table[data-players="2"] .card { width: 76px; height: 108px; font-size: 17px; border-radius: 6px; }
 #bj-table[data-players="2"] .card .card-middle { font-size: 30px; }
 #bj-table[data-players="2"] .card .card-bottom { font-size: 17px; }
-#bj-table[data-players="2"] .cards .card { margin-left: -24px; }
+/* player 2 card overlap handled by JS */
 
 #bj-table[data-players="3"] .card { width: 68px; height: 96px; font-size: 15px; border-radius: 6px; }
 #bj-table[data-players="3"] .card .card-middle { font-size: 27px; }
 #bj-table[data-players="3"] .card .card-bottom { font-size: 15px; }
-#bj-table[data-players="3"] .cards .card { margin-left: -22px; }
+/* player 3 card overlap handled by JS */
 
 #bj-table[data-players="4"] .card { width: 62px; height: 88px; font-size: 14px; border-radius: 5px; }
 #bj-table[data-players="4"] .card .card-middle { font-size: 24px; }
 #bj-table[data-players="4"] .card .card-bottom { font-size: 14px; }
-#bj-table[data-players="4"] .cards .card { margin-left: -20px; }
+/* player 4 card overlap handled by JS */
 
 /* ======================================================
    SEATS — anchor bottom-center, grow upward
@@ -322,15 +322,15 @@ h1 {
 #bj-table[data-players="3"] .hand .handHeader { font-size: 13px; }
 #bj-table[data-players="4"] .hand .handHeader { font-size: 12px; }
 
-/* Cards row — width set by JS to avoid negative-margin max-content bug */
+/* Cards row — absolutely positioned children, sized by JS */
 .cards {
-    display: flex;
-    overflow: visible;
     position: relative;
+    display: block;
+    overflow: visible;
+    flex-shrink: 0;
 }
 
-.cards .card              { margin-left: -18px; }
-.cards .card:first-child  { margin-left: 0; }
+/* Cards use absolute positioning set by JS — no margin overlap needed */
 
 /* ======================================================
    BET / BALANCE UNDER HAND
@@ -712,7 +712,7 @@ a.btn-link:hover { background: rgba(255,255,255,0.15); }
 ====================================================== */
 .shoe-bar-wrap {
     position: absolute;
-    bottom: 6%;
+    bottom: 3%;
     left: 50%;
     transform: translateX(-50%);
     width: 55%;

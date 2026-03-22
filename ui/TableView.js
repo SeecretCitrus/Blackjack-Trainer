@@ -288,14 +288,38 @@ function buildHand(hand, isActive, phase, numPlayers = 1) {
 
     const cardsDiv = document.createElement('div');
     cardsDiv.className = 'cards';
-    hand.cards.forEach(card => {
-        cardsDiv.innerHTML += renderCard(card);
+    const cardW2   = CARD_WIDTHS[numPlayers]   ?? 54;
+    const overlap2 = CARD_OVERLAPS[numPlayers] ?? 18;
+    const step2    = cardW2 - overlap2;
+    hand.cards.forEach((card, ci) => {
+        const cardEl = document.createElement('div');
+        cardEl.style.position = 'absolute';
+        cardEl.style.left = (ci * step2) + 'px';
+        cardEl.style.top  = '0';
+        cardEl.style.zIndex = ci;
+        cardEl.innerHTML = renderCard(card);
+        // Move the inner card div up to replace the wrapper
+        const inner = cardEl.firstElementChild;
+        if (inner) {
+            inner.style.position = 'absolute';
+            inner.style.left = (ci * step2) + 'px';
+            inner.style.top  = '0';
+            inner.style.zIndex = ci;
+            cardsDiv.appendChild(inner);
+        }
     });
 
-    // Set explicit pixel width so overlapping cards don't overflow the container
-    const cw = cardsRowWidth(hand.cards.length, numPlayers);
-    cardsDiv.style.width = cw + 'px';
-    block.style.minWidth = (cw + 16) + 'px'; // 16px = 2 * 8px padding
+    // Explicitly size the cards container based on card count
+    // Using actual card width + overlap math (no negative margins needed)
+    const cardW   = CARD_WIDTHS[numPlayers]   ?? 54;
+    const overlap = CARD_OVERLAPS[numPlayers] ?? 18;
+    const step    = cardW - overlap; // how much each subsequent card advances
+    const totalW  = hand.cards.length > 0 ? cardW + (hand.cards.length - 1) * step : cardW;
+    cardsDiv.style.width    = totalW + 'px';
+    cardsDiv.style.height   = (numPlayers <= 2 ? (numPlayers === 1 ? 126 : 108) :
+                               numPlayers <= 3 ? 96 : numPlayers <= 4 ? 88 : 76) + 'px';
+    cardsDiv.style.position = 'relative';
+    block.style.minWidth    = (totalW + 10) + 'px';
 
     block.appendChild(cardsDiv);
 
