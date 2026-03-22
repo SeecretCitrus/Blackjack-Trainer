@@ -197,9 +197,13 @@ function renderResults(s) {
         if (!rows.length) return '';
         let t = `<div class="opt-section">`;
         t += `<div class="opt-section-title">${title}</div>`;
-        t += `<table class="sim-breakdown-table"><thead><tr>
-            <th style="text-align:left">Hand</th>
-            <th>Hands</th><th>Win %</th><th>Loss %</th><th>Push %</th><th>Bust %</th>
+        t += `<table class="sim-breakdown-table" style="width:100%"><thead><tr>
+            <th style="text-align:left;min-width:52px">Hand</th>
+            <th style="min-width:70px">Hands</th>
+            <th style="min-width:60px">Win %</th>
+            <th style="min-width:60px">Loss %</th>
+            <th style="min-width:60px">Push %</th>
+            <th style="min-width:60px">Bust %</th>
         </tr></thead><tbody>`;
         for (const row of rows) {
             const wc = winRateColor(row.winPct);
@@ -224,7 +228,7 @@ function renderResults(s) {
         return t;
     }
 
-    html += `<div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start">`;
+    html += `<div style="margin-top:16px">`;
     html += bdSection('Hard totals', bdHard);
     html += bdSection('Soft totals', bdSoft);
     html += bdSection('Pairs', bdPair);
@@ -337,20 +341,28 @@ function showCopyTextarea(text) {
     const copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy to clipboard';
     copyBtn.style.cssText = 'font-size:12px;padding:5px 16px;border:1px solid rgba(255,215,0,0.5);background:rgba(255,215,0,0.15);color:gold;border-radius:5px;cursor:pointer;';
+    // Capture text in a local const so the closure is always fresh
+    const textToCopy = text;
     copyBtn.onclick = () => {
-        // navigator.clipboard.writeText is the correct modern API for HTTPS
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(() => {
-                copyBtn.textContent = 'Copied!';
-                setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 2500);
-            }).catch(() => {
-                // Permission denied — fall back to manual selection
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                copyBtn.textContent = '✓ Copied!';
+                copyBtn.style.background = 'rgba(80,200,100,0.2)';
+                copyBtn.style.borderColor = 'rgba(80,200,100,0.6)';
+                copyBtn.style.color = '#6ddb8a';
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy to clipboard';
+                    copyBtn.style.background = 'rgba(255,215,0,0.15)';
+                    copyBtn.style.borderColor = 'rgba(255,215,0,0.5)';
+                    copyBtn.style.color = 'gold';
+                }, 2500);
+            }).catch(err => {
+                console.error('Clipboard write failed:', err);
                 ta.focus(); ta.select();
                 copyBtn.textContent = 'Ctrl+C to copy';
                 setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 3000);
             });
         } else {
-            // Older browser fallback — select the textarea and rely on user Ctrl+C
             ta.focus(); ta.select();
             copyBtn.textContent = 'Ctrl+C to copy';
             setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 3000);

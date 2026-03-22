@@ -355,7 +355,8 @@ body {
 #optPlaceholder strong { color: rgba(255,255,255,0.65); }
 
 /* Optimizer tables */
-.opt-section { margin-bottom: 28px; }
+.opt-section { margin-bottom: 20px; }
+.opt-section:last-child { margin-bottom: 0; }
 .opt-section-title {
     font-size: 12px;
     letter-spacing: 2px;
@@ -487,9 +488,9 @@ body {
     text-align: right;
 }
 .sim-breakdown-table th:first-child { text-align: left; }
-.bd-label { padding: 4px 10px; color: rgba(255,255,255,0.75); font-weight: bold; }
-.bd-num   { padding: 4px 10px; text-align: right; color: rgba(255,255,220,0.8); }
-.bd-win   { padding: 4px 10px; text-align: right; font-weight: bold; color: rgba(255,255,220,0.95); border-radius: 3px; }
+.bd-label { padding: 5px 10px; color: rgba(255,255,255,0.75); font-weight: bold; }
+.bd-num   { padding: 5px 10px; text-align: right; color: rgba(255,255,220,0.8); }
+.bd-win   { padding: 5px 10px; text-align: right; font-weight: bold; color: rgba(255,255,220,0.95); border-radius: 3px; }
 .sim-breakdown-table tr:hover td { background: rgba(255,255,255,0.04); }
 
 /* Copy button */
