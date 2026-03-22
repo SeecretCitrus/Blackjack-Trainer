@@ -3,7 +3,8 @@ import { Game } from '../engine/Game.js';
 import { renderGame } from './TableView.js';
 import { CardCounter, SYSTEMS } from '../CardCounter.js';
 
-const BOT_DELAY_MS = 500;
+const BOT_DELAY_MS   = 500;
+const DEALER_DELAY_MS = 500;
 
 let game;
 let botSeats = [];   // botSeats[playerIndex] = true|false
@@ -66,7 +67,9 @@ function runBotStep() {
     countNewCards();
     refreshUI();
 
-    if (game.phase === "PLAYER_TURN" && game.currentPlayer && currentPlayerIsBot()) {
+    if (game.phase === 'DEALER_TURN') {
+        runDealerSequence();
+    } else if (game.phase === "PLAYER_TURN" && game.currentPlayer && currentPlayerIsBot()) {
         setTimeout(runBotStep, BOT_DELAY_MS);
     }
 }
@@ -285,7 +288,12 @@ function handleManualAction(action) {
     game.handlePlayerAction(action);
     countNewCards();
     refreshUI();
-    maybeRunBots();
+
+    if (game.phase === 'DEALER_TURN') {
+        runDealerSequence();
+    } else {
+        maybeRunBots();
+    }
 }
 
 // ======================================================
@@ -335,6 +343,34 @@ function setupControls() {
             counter.active = true;
             // Hook deal() so every card is counted as it leaves the shoe
             hookCounterIntoShoe();
+
+            // Wrap initialDeal to flag the hole card before it's dealt.
+            // Deal order: [P1..PN, Dealer] × 2 rounds.
+            // The hole card is the LAST card of the second round = dealer's 2nd card.
+            const origInitialDeal = game.initialDeal.bind(game);
+            game.initialDeal = function() {
+                const activePlayers = this.activePlayers().length;
+                // Total cards in initial deal = (activePlayers + 1) * 2
+                // The hole card is the very last one dealt
+                // We flag it by counting deals within this call
+                let dealsThisCall = 0;
+                const totalCards  = (activePlayers + 1) * 2;
+                const holeCardPos = totalCards; // last card
+                const origDeal    = this.shoe.deal.bind(this.shoe);
+                this.shoe.deal    = function() {
+                    dealsThisCall++;
+                    if (dealsThisCall === holeCardPos) {
+                        // Flag: next deal call from this position is the hole card
+                        this._nextDealerCardIsHole = true;
+                    }
+                    return origDeal();
+                };
+                origInitialDeal();
+                // Restore the counting-aware deal (hookCounterIntoShoe already set it,
+                // but we replaced it above — re-hook to restore counting behaviour)
+                hookCounterIntoShoe();
+            };
+
             // Re-hook after reshuffles (checkShuffle creates a new Shoe object)
             const origCheckShuffle = game.checkShuffle.bind(game);
             game.checkShuffle = function() {
@@ -370,12 +406,21 @@ function setupControls() {
         if (!game || game.phase !== "ROUND_OVER") return;
         applyCardScale(game.players.length);
         buildBetPanel();
+        // Reset shoe deal counter for hole-card tracking each new round
+        if (game.shoe) {
+            game.shoe._dealCount = 0;
+            game.shoe._holeCardIdx = 2 * (game.players.filter(p=>!p.sittingOut).length + 1);
+        }
         game.startRound();
         countVisibleCards();
         const bp = document.getElementById("betPanel");
         if (bp) bp.innerHTML = "";
         refreshUI();
-        maybeRunBots();
+        if (game.phase === 'DEALER_TURN') {
+            runDealerSequence();
+        } else {
+            maybeRunBots();
+        }
     });
 
     document.getElementById("trainerToggle").addEventListener("change", () => {
@@ -441,6 +486,42 @@ function updateExplanationPanel() {
 }
 
 // ======================================================
+// Animated dealer sequence
+// ======================================================
+function runDealerSequence() {
+    if (!game || game.phase !== 'DEALER_TURN') return;
+
+    // Brief pause before flipping hole card, then reveal it
+    setTimeout(() => {
+        countHoleCard();
+        refreshUI(); // show hole card flipped
+        // Then pause again before hitting
+        setTimeout(dealerHitNext, DEALER_DELAY_MS);
+    }, DEALER_DELAY_MS);
+}
+
+function dealerHitNext() {
+    if (!game || game.phase !== 'DEALER_TURN') return;
+
+    const shouldHit = game.dealerHitOnce();
+    refreshUI();
+
+    if (shouldHit && game.dealer.shouldHit(game.rules.dealerHitsSoft17)) {
+        // More cards needed
+        setTimeout(dealerHitNext, DEALER_DELAY_MS);
+    } else {
+        // Dealer is done — resolve round
+        setTimeout(() => {
+            game.checkWinner();
+            game.settleAllBets();
+            game.phase = 'ROUND_OVER';
+            refreshUI();
+            updateButtons();
+        }, DEALER_DELAY_MS);
+    }
+}
+
+// ======================================================
 // Card counting helpers
 // ======================================================
 // The counter works by intercepting the shoe's deal() method
@@ -452,16 +533,35 @@ function updateExplanationPanel() {
 function hookCounterIntoShoe() {
     if (!counter || !game) return;
     const shoe = game.shoe;
-    if (shoe._countHooked) return; // already hooked
+    if (shoe._countHooked) return;
     const origDeal = shoe.deal.bind(shoe);
+
+    // We track whether the NEXT dealer card is the hole card using a flag
+    // set by prepareForDeal() at the start of each round's initial deal.
+    // This is much more reliable than position arithmetic across rounds.
+    shoe._nextDealerCardIsHole = false;
     shoe.deal = function() {
         const card = origDeal();
         if (card && counter) {
-            counter.countCard(card);
+            if (this._nextDealerCardIsHole) {
+                // This is the hole card — store it, don't count yet
+                counter._holeCard = card;
+                this._nextDealerCardIsHole = false;
+            } else {
+                counter.countCard(card);
+            }
         }
         return card;
     };
     shoe._countHooked = true;
+}
+
+// Count the hole card when it's revealed (called at start of dealer sequence)
+function countHoleCard() {
+    if (counter && counter._holeCard) {
+        counter.countCard(counter._holeCard);
+        counter._holeCard = null;
+    }
 }
 
 // Re-hook when shoe reshuffles (new Shoe object created in checkShuffle)
