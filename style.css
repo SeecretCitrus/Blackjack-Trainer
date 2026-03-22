@@ -778,3 +778,75 @@ a.btn-link:hover { background: rgba(255,255,255,0.15); }
 
 #bj-table[data-players="1"] .hand-net { font-size: 14px; }
 #bj-table[data-players="2"] .hand-net { font-size: 12px; }
+
+/* ======================================================
+   CARD COUNTING PANEL
+====================================================== */
+#countPanel {
+    max-width: 480px;
+    width: 100%;
+    margin: 10px auto 0;
+}
+
+.count-panel {
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.count-system {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,215,0,0.55);
+    text-align: center;
+}
+
+.count-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.count-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 5px;
+    padding: 5px 4px;
+}
+
+.count-lbl {
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.count-val {
+    font-size: 20px;
+    font-weight: bold;
+    color: rgba(255,255,220,0.9);
+    line-height: 1;
+}
+
+.count-label-bar {
+    font-size: 11px;
+    text-align: center;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,220,0.7);
+    padding-top: 2px;
+}
+
+.count-ace-row {
+    font-size: 10px;
+    text-align: center;
+    color: rgba(255,255,255,0.4);
+}

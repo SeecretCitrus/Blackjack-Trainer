@@ -54,6 +54,17 @@
             <input type="checkbox" id="trainerToggle">
             Show Correct Move
         </label>
+        <label>
+            <input type="checkbox" id="countToggle">
+            Card Counting
+        </label>
+        <label id="countSystemLabel" style="display:none">
+            System:
+            <select id="countSystemSelect">
+                <option value="hilo">Hi-Lo (simple)</option>
+                <option value="omega2">Omega II (complex)</option>
+            </select>
+        </label>
     </div>
 
     <!-- Bot toggles -->
@@ -72,6 +83,9 @@
         <a href="simulation.html" id="simulateBtn" class="btn-link">Simulator ↗</a>
         <button id="nextRoundBtn">Next Round</button>
     </div>
+
+    <!-- Card counting display -->
+    <div id="countPanel"></div>
 
     <!-- Strategy explanation -->
     <div id="explanationPanel"></div>

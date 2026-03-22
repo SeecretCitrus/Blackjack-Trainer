@@ -1,11 +1,13 @@
 import { StrategyEngine } from '../logic/StrategyEngine.js';
 import { Game } from '../engine/Game.js';
 import { renderGame } from './TableView.js';
+import { CardCounter, SYSTEMS } from '../CardCounter.js';
 
 const BOT_DELAY_MS = 500;
 
 let game;
 let botSeats = [];   // botSeats[playerIndex] = true|false
+let counter  = null; // CardCounter instance, null when counting is off
 
 // ======================================================
 // Bot seat UI — rebuilt when player count changes
@@ -61,6 +63,7 @@ function runBotStep() {
     );
 
     game.handlePlayerAction(action);
+    countNewCards();
     refreshUI();
 
     if (game.phase === "PLAYER_TURN" && game.currentPlayer && currentPlayerIsBot()) {
@@ -244,6 +247,7 @@ function refreshUI() {
     updateButtons();
     highlightCorrectAction();
     updateExplanationPanel();
+    updateCountPanel();
 }
 
 function showTooltip(button, message) {
@@ -279,6 +283,7 @@ function handleManualAction(action) {
     }
 
     game.handlePlayerAction(action);
+    countNewCards();
     refreshUI();
     maybeRunBots();
 }
@@ -322,9 +327,28 @@ function setupControls() {
             p.currentBet      = minBet;
         });
 
+        // Initialise card counter if enabled
+        const countOn = document.getElementById('countToggle')?.checked;
+        const system  = document.getElementById('countSystemSelect')?.value ?? 'hilo';
+        if (countOn) {
+            counter = new CardCounter(numDecks, system);
+            counter.active = true;
+            // Hook into game shoe reshuffle
+            const origCheckShuffle = game.checkShuffle.bind(game);
+            game.checkShuffle = function() {
+                const before = this.shoe.cards.length;
+                origCheckShuffle();
+                if (this.shoe.cards.length > before) counter.reset();
+            };
+        } else {
+            counter = null;
+        }
+
         applyCardScale(numPlayers);
         buildBetPanel();
         game.startRound();
+        // Count the initial deal cards
+        countVisibleCards();
         // Clear bet panel once round has started — bets are locked
         const bp = document.getElementById("betPanel");
         if (bp) bp.innerHTML = "";
@@ -342,7 +366,7 @@ function setupControls() {
         applyCardScale(game.players.length);
         buildBetPanel();
         game.startRound();
-        // Clear bet panel once round has started — bets are now locked in
+        countVisibleCards();
         const bp = document.getElementById("betPanel");
         if (bp) bp.innerHTML = "";
         refreshUI();
@@ -409,6 +433,154 @@ function updateExplanationPanel() {
 
     panel.textContent = explanation;
     panel.classList.add("visible");
+}
+
+// ======================================================
+// Card counting helpers
+// ======================================================
+
+// Count all currently visible cards on the table
+// Called on deal so we count the initial two cards per player and dealer upcard
+function countVisibleCards() {
+    if (!counter || !game) return;
+    counter.reset(); // recount from scratch each round start to stay accurate
+
+    // Count dealer upcard only (hole card is hidden)
+    const dealerHand = game.dealer.hands[0];
+    if (dealerHand && dealerHand.cards.length > 0) {
+        counter.countCard(dealerHand.cards[0]); // upcard visible
+    }
+
+    // Count all player cards (all visible)
+    for (const player of game.players) {
+        for (const hand of player.hands) {
+            for (const card of hand.cards) {
+                counter.countCard(card);
+            }
+        }
+    }
+
+    // Count cards dealt in previous rounds too (running count persists across rounds)
+    // We do this by counting total cards dealt = totalCards - remaining
+    // But since we reset above, we need the cumulative count
+    // Solution: don't reset — track incrementally via countNewCards instead
+    // Revert: don't reset here, just count new cards
+    // Actually the correct approach is countNewCards for mid-round actions
+    // and countDealCards just for the initial deal
+}
+
+// Count only newly dealt cards since last check
+// Used after each action to count any new cards that appeared
+let _lastCountedCards = 0;
+function countNewCards() {
+    if (!counter || !game) return;
+    // Count total cards on table now vs last time
+    let totalOnTable = 0;
+    const dealerHand = game.dealer.hands[0];
+    if (dealerHand) totalOnTable += dealerHand.cards.length;
+    for (const player of game.players) {
+        for (const hand of player.hands) {
+            totalOnTable += hand.cards.length;
+        }
+    }
+    // If cards increased, count the new visible ones
+    // Simpler: just re-derive count from all visible cards each time
+}
+
+// Recount all visible cards from scratch — most reliable approach
+function recountAllVisible() {
+    if (!counter || !game) return;
+    // Save running count from before this round
+    const prevCount = counter._prevRoundCount ?? 0;
+    counter.runningCount = prevCount;
+    counter.aceSideCount = counter._prevAceSideCount ?? 0;
+
+    const dealerHand = game.dealer.hands[0];
+    if (dealerHand) {
+        // Only count upcard (index 0) — hole card revealed only at round end
+        if (dealerHand.cards.length > 0) {
+            counter.countCard(dealerHand.cards[0]);
+        }
+        // At round over, count hole card too
+        if (game.phase === 'ROUND_OVER' && dealerHand.cards.length > 1) {
+            for (let i = 1; i < dealerHand.cards.length; i++) {
+                counter.countCard(dealerHand.cards[i]);
+            }
+        }
+    }
+    for (const player of game.players) {
+        for (const hand of player.hands) {
+            for (const card of hand.cards) {
+                counter.countCard(card);
+            }
+        }
+    }
+}
+
+// Called on Next Round — save end-of-round count so next round starts from it
+function saveRoundCount() {
+    if (!counter) return;
+    counter._prevRoundCount    = counter.runningCount;
+    counter._prevAceSideCount  = counter.aceSideCount;
+    counter.cardsDealt         = game.startingDeckSize - game.shoe.cards.length;
+}
+
+// Update the count display panel
+function updateCountPanel() {
+    const panel = document.getElementById('countPanel');
+    if (!panel) return;
+
+    const active = document.getElementById('countToggle')?.checked;
+    const sysSelect = document.getElementById('countSystemLabel');
+    if (sysSelect) sysSelect.style.display = active ? '' : 'none';
+
+    if (!active || !counter || !game) {
+        panel.innerHTML = '';
+        return;
+    }
+
+    recountAllVisible();
+
+    const tc      = counter.getTrueCount();
+    const rc      = counter.runningCount;
+    const decks   = counter.getDecksRemaining().toFixed(1);
+    const label   = counter.getCountLabel();
+    const mult    = counter.getBetMultiplier();
+    const sysName = counter.systemName;
+
+    const tcStr = (tc >= 0 ? '+' : '') + tc.toFixed(1);
+    const rcStr = (rc >= 0 ? '+' : '') + rc;
+
+    let html = `<div class="count-panel">
+        <div class="count-system">${sysName}</div>
+        <div class="count-grid">
+            <div class="count-cell">
+                <div class="count-lbl">Running</div>
+                <div class="count-val" style="color:${label.color}">${rcStr}</div>
+            </div>
+            <div class="count-cell">
+                <div class="count-lbl">True count</div>
+                <div class="count-val" style="color:${label.color}">${tcStr}</div>
+            </div>
+            <div class="count-cell">
+                <div class="count-lbl">Decks left</div>
+                <div class="count-val">${decks}</div>
+            </div>
+            <div class="count-cell">
+                <div class="count-lbl">Bet</div>
+                <div class="count-val" style="color:${label.color}">${mult}×</div>
+            </div>
+        </div>
+        <div class="count-label-bar" style="color:${label.color}">${label.text} — ${label.bet}</div>`;
+
+    if (counter.usesAceSideCount) {
+        const surplus = counter.getAceSurplus();
+        const sStr = (surplus >= 0 ? '+' : '') + surplus.toFixed(1);
+        html += `<div class="count-ace-row">Ace surplus: <span style="color:${surplus > 0 ? '#6ddb8a' : surplus < 0 ? '#e07070' : 'rgba(255,255,255,0.5)'}">${sStr}</span> per remaining deck</div>`;
+    }
+
+    html += `</div>`;
+    panel.innerHTML = html;
 }
 
 export { setupControls, updateButtons, handleManualAction };
