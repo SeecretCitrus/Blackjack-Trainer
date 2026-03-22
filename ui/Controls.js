@@ -253,16 +253,18 @@ function refreshUI() {
     updateCountPanel();
 }
 
-function showTooltip(button, message) {
+function showTooltip(button, message, correct = null) {
     const rect    = button.getBoundingClientRect();
     const tooltip = document.createElement("div");
-    tooltip.className  = "tooltip";
-    tooltip.innerText  = message;
+    tooltip.className = "tooltip";
+    tooltip.innerText = message;
+    if (correct === true)  tooltip.classList.add("tooltip-correct");
+    if (correct === false) tooltip.classList.add("tooltip-wrong");
     tooltip.style.position = "fixed";
     tooltip.style.left     = rect.left + rect.width / 2 + "px";
-    tooltip.style.top      = rect.top - 30 + "px";
+    tooltip.style.top      = rect.top - 36 + "px";
     document.body.appendChild(tooltip);
-    setTimeout(() => tooltip.remove(), 2000);
+    setTimeout(() => tooltip.remove(), correct === true ? 1200 : 2000);
 }
 
 function handleManualAction(action) {
@@ -280,9 +282,9 @@ function handleManualAction(action) {
     const btn = document.getElementById(buttonMap[action]);
 
     if (action !== correct) {
-        showTooltip(btn, `✕ Wrong! Correct: ${correct}`);
+        showTooltip(btn, `✕  Correct: ${correct}`, false);
     } else {
-        showTooltip(btn, `✓ Correct`);
+        showTooltip(btn, `✓`, true);
     }
 
     game.handlePlayerAction(action);
@@ -427,6 +429,51 @@ function setupControls() {
         highlightCorrectAction();
         updateExplanationPanel();
     });
+
+    // Card counting toggle — update panel immediately when toggled mid-game
+    document.getElementById("countToggle").addEventListener("change", () => {
+        const countOn = document.getElementById("countToggle").checked;
+        const sysLabel = document.getElementById("countSystemLabel");
+        if (sysLabel) sysLabel.style.display = countOn ? "" : "none";
+        if (!countOn) {
+            counter = null;
+            document.getElementById("countPanel").innerHTML = "";
+            return;
+        }
+        // Start counting mid-game if a game is running
+        if (game) {
+            const system = document.getElementById("countSystemSelect")?.value ?? "hilo";
+            const numDecks = parseInt(document.getElementById("numDecksSelect").value);
+            counter = new CardCounter(numDecks, system);
+            counter.active = true;
+            hookCounterIntoShoe();
+        }
+        updateCountPanel();
+    });
+
+    // System select change — reinitialise counter
+    document.getElementById("countSystemSelect")?.addEventListener("change", () => {
+        if (!game || !document.getElementById("countToggle").checked) return;
+        const system = document.getElementById("countSystemSelect").value;
+        const numDecks = parseInt(document.getElementById("numDecksSelect").value);
+        counter = new CardCounter(numDecks, system);
+        counter.active = true;
+        hookCounterIntoShoe();
+        updateCountPanel();
+    });
+
+    // Collapsible rules panel
+    const rulesToggleBtn = document.getElementById("rulesPanelToggle");
+    const rulesPanelInner = document.getElementById("rulesPanelInner");
+    const rulesPanelArrow = document.getElementById("rulesPanelArrow");
+    let rulesPanelOpen = true;
+    if (rulesToggleBtn) {
+        rulesToggleBtn.addEventListener("click", () => {
+            rulesPanelOpen = !rulesPanelOpen;
+            rulesPanelInner.style.display = rulesPanelOpen ? "" : "none";
+            rulesPanelArrow.textContent   = rulesPanelOpen ? "◀" : "▶";
+        });
+    }
 
     updateButtons();
 }
