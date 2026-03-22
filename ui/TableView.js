@@ -32,11 +32,16 @@ function renderGame(game, botSeats = []) {
     rail.className = 'rail-inner';
     tableEl.appendChild(rail);
 
-    const inscription = document.createElement('div');
-    inscription.className = 'inscription';
-    const s17text = game.rules.dealerHitsSoft17 ? 'DEALER HITS SOFT 17' : 'DEALER STANDS ON ALL 17s';
-    inscription.innerHTML = `BLACKJACK PAYS 3 TO 2<br>${s17text}`;
-    tableEl.appendChild(inscription);
+    const numPlayersForIns = game ? game.players.length : 1;
+    if (numPlayersForIns >= 2) {
+        const inscription = document.createElement('div');
+        inscription.className = 'inscription';
+        const s17text = game.rules.dealerHitsSoft17 ? 'DEALER HITS SOFT 17' : 'DEALER STANDS ON ALL 17s';
+        inscription.innerHTML = `BLACKJACK PAYS 3 TO 2<br>${s17text}`;
+        // Push inscription lower for fewer players so dealer doesn't overlap
+        if (numPlayersForIns <= 3) inscription.style.top = '62%';
+        tableEl.appendChild(inscription);
+    }
 
     if (!game) return;
 
