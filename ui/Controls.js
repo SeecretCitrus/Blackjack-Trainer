@@ -462,18 +462,32 @@ function setupControls() {
         updateCountPanel();
     });
 
-    // Collapsible rules panel
-    const rulesToggleBtn = document.getElementById("rulesPanelToggle");
+    // Collapsible rules panel — collapses to a thin tab
+    const rulesPanel     = document.getElementById("rulesPanel");
     const rulesPanelInner = document.getElementById("rulesPanelInner");
-    const rulesPanelArrow = document.getElementById("rulesPanelArrow");
-    let rulesPanelOpen = true;
-    if (rulesToggleBtn) {
-        rulesToggleBtn.addEventListener("click", () => {
-            rulesPanelOpen = !rulesPanelOpen;
-            rulesPanelInner.style.display = rulesPanelOpen ? "" : "none";
-            rulesPanelArrow.textContent   = rulesPanelOpen ? "◀" : "▶";
-        });
+    const rulesPanelHeader = document.getElementById("rulesPanelHeader");
+    const rulesPanelTab  = document.getElementById("rulesPanelTab");
+    const closeBtn       = document.getElementById("rulesPanelToggle");
+    const openBtn        = document.getElementById("rulesPanelOpen");
+    let rulesPanelOpen   = true;
+
+    function setRulesPanel(open) {
+        rulesPanelOpen = open;
+        if (open) {
+            rulesPanel.classList.remove("collapsed");
+            rulesPanelInner.style.display  = "";
+            rulesPanelHeader.style.display = "";
+            if (rulesPanelTab) rulesPanelTab.style.display = "none";
+        } else {
+            rulesPanel.classList.add("collapsed");
+            rulesPanelInner.style.display  = "none";
+            rulesPanelHeader.style.display = "none";
+            if (rulesPanelTab) rulesPanelTab.style.display = "flex";
+        }
     }
+
+    if (closeBtn) closeBtn.addEventListener("click", () => setRulesPanel(false));
+    if (openBtn)  openBtn.addEventListener("click",  () => setRulesPanel(true));
 
     updateButtons();
 }

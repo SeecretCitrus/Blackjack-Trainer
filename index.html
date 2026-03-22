@@ -8,21 +8,21 @@
 
 <body>
 
-<!-- Top bar -->
-<div id="topBar">
-    <h1>Blackjack Trainer</h1>
-    <a href="simulation.html" id="simulateBtn" class="btn-link">Simulator ↗</a>
-</div>
-
 <div id="mainLayout">
 
-    <!-- ── LEFT: Collapsible rules panel ── -->
+    <!-- ══════════════════════════════
+         LEFT: Full-height rules panel
+    ══════════════════════════════ -->
     <div id="rulesPanel">
-        <button id="rulesPanelToggle" class="rules-toggle-btn">
-            <span id="rulesPanelArrow">◀</span> Rules
-        </button>
+
+        <div id="rulesPanelHeader">
+            <span id="rulesPanelTitle">Rules</span>
+            <button id="rulesPanelToggle" title="Collapse panel">◀</button>
+        </div>
+
         <div id="rulesPanelInner">
-            <div class="rules-section-title">Game rules</div>
+
+            <div class="rules-section-title">Configuration</div>
 
             <label class="rules-label">Decks
                 <select id="numDecksSelect">
@@ -37,7 +37,7 @@
                 </select>
             </label>
 
-            <label class="rules-label">Dealer Soft 17
+            <label class="rules-label">Soft 17
                 <select id="S17Select">
                     <option value="false">Stand (S17)</option>
                     <option value="true" selected>Hit (H17)</option>
@@ -64,13 +64,32 @@
                 <input type="number" id="startBalInput" class="rule-input" value="100" min="1" step="10">
             </label>
 
-            <div class="rules-section-title" style="margin-top:12px">Bots</div>
+            <button id="startBtn" class="rules-start-btn">▶ Start Game</button>
+
+            <div class="rules-section-title" style="margin-top:14px">Bots</div>
             <div id="botSettings"></div>
+
         </div>
+
+        <!-- Collapsed tab (shown when panel is closed) -->
+        <div id="rulesPanelTab" style="display:none">
+            <button id="rulesPanelOpen" title="Expand panel">▶</button>
+            <span class="rules-tab-label">Rules</span>
+        </div>
+
     </div>
 
-    <!-- ── CENTER: Table + controls ── -->
+    <!-- ══════════════════════════════
+         CENTER: Table + controls
+    ══════════════════════════════ -->
     <div id="centerCol">
+
+        <!-- Top-right simulator link -->
+        <div id="topRight">
+            <a href="simulation.html" id="simulateBtn" class="btn-link">Simulator ↗</a>
+        </div>
+
+        <h1>Blackjack Trainer</h1>
 
         <div id="bj-table"></div>
 
@@ -95,9 +114,8 @@
         <!-- Bet inputs -->
         <div id="betPanel"></div>
 
-        <!-- Action buttons -->
+        <!-- Action buttons (no Start — it's in the rules panel) -->
         <div id="controls">
-            <button id="startBtn">Start Game</button>
             <button id="hitBtn">Hit</button>
             <button id="standBtn">Stand</button>
             <button id="doubleBtn">Double</button>
