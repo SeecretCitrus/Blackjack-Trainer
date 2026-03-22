@@ -130,7 +130,7 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
     if (player.sittingOut) {
         panel.className = 'seat-panel sitting-out';
         panel.innerHTML = `
-            <div class="seat-label">\${player.name}</div>
+            <div class="seat-label">${player.name}</div>
             <div class="sitout-badge">Sitting Out — ${Math.round(player.balance)}</div>
         `;
         seat.appendChild(panel);
