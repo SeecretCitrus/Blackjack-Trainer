@@ -121,8 +121,8 @@ function mergeStats(parts) {
         bustPct: b.hands > 0 ? b.busts  / b.hands * 100 : 0,
     })).sort((a, b) => a.sortKey - b.sortKey);
 
-    // Averaged across parts
-    merged.ev              = parts.reduce((s, p) => s + p.ev, 0) / parts.length;
+    // EV computed from merged totals (weighted, not averaged)
+    merged.ev = merged.handsPlayed > 0 ? (merged.wins - merged.losses) / merged.handsPlayed : 0;
     merged.avgHandValue    = parts.reduce((s, p) => s + p.avgHandValue, 0) / parts.length;
     merged.playerBustRate  = parts.reduce((s, p) => s + p.playerBustRate, 0) / parts.length;
     merged.dealerBustRate  = parts.reduce((s, p) => s + p.dealerBustRate, 0) / parts.length;
@@ -142,9 +142,9 @@ function renderResults(s) {
 
     summaryGrid.innerHTML = `
         <div class="metric-card highlight ${evPositive ? 'positive' : 'negative'}">
-            <div class="metric-label">House Edge (EV)</div>
+            <div class="metric-label">Player EV per hand</div>
             <div class="metric-value">${evPositive ? '+' : ''}${evPct}%</div>
-            <div class="metric-sub">Player perspective</div>
+            <div class="metric-sub">${evPositive ? 'Player edge' : 'House edge: ' + Math.abs(parseFloat(evPct)).toFixed(3) + '%'}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Hands Played</div>

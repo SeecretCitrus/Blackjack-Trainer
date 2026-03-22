@@ -163,7 +163,9 @@ class Simulator {
             ? Math.round(reshuffleIntervals.reduce((a, b) => a + b, 0) / reshuffleIntervals.length)
             : s.handsPlayed;
 
-        const ev = totalWagered > 0 ? totalPnl / totalWagered : 0;
+        // EV as fraction of one unit bet: (wins - losses) / hands
+        // This is the standard house edge calculation assuming flat unit bets
+        const ev = s.handsPlayed > 0 ? (s.wins - s.losses) / s.handsPlayed : 0;
 
         // Sort breakdown by total hand count descending
         const breakdownArray = Object.entries(handBreakdown)

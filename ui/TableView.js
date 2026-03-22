@@ -34,7 +34,8 @@ function renderGame(game, botSeats = []) {
 
     const inscription = document.createElement('div');
     inscription.className = 'inscription';
-    inscription.innerHTML = 'BLACKJACK PAYS 3 TO 2<br>DEALER MUST STAND ON ALL 17s';
+    const s17text = game.rules.dealerHitsSoft17 ? 'DEALER HITS SOFT 17' : 'DEALER STANDS ON ALL 17s';
+    inscription.innerHTML = `BLACKJACK PAYS 3 TO 2<br>${s17text}`;
     tableEl.appendChild(inscription);
 
     if (!game) return;
@@ -158,22 +159,13 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
         panel.appendChild(badge);
     }
 
-    // Balance & bet info
-    const infoRow = document.createElement('div');
-    infoRow.className = 'seat-info-row';
-    infoRow.innerHTML = `
-        <span class="seat-balance">$${Math.round(player.balance)}</span>
-        <span class="seat-bet-ring">bet $${player.currentBet}</span>
-    `;
-    panel.appendChild(infoRow);
-
     // Hands
     const handsRow = document.createElement('div');
     handsRow.className = 'playerHands';
 
     player.hands.forEach((hand, handIndex) => {
         const isActiveHand = isCurrentPlayer && handIndex === game.currentHandIndex;
-        handsRow.appendChild(buildHand(hand, isActiveHand, game.phase));
+        handsRow.appendChild(buildHand(hand, isActiveHand, game.phase, player.balance));
     });
 
     panel.appendChild(handsRow);
@@ -184,7 +176,7 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
 // ======================================================
 // Individual hand block
 // ======================================================
-function buildHand(hand, isActive, phase) {
+function buildHand(hand, isActive, phase, playerBalance) {
     const block = document.createElement('div');
 
     let cls = 'hand';
@@ -213,12 +205,18 @@ function buildHand(hand, isActive, phase) {
     });
     block.appendChild(cardsDiv);
 
-    // Bet amount on hand
+    // Bet and balance shown under the cards
     if (hand.bet > 0) {
         const betEl = document.createElement('div');
         betEl.className = 'hand-bet';
-        betEl.textContent = `$${hand.bet}`;
+        betEl.textContent = `Bet: $${hand.bet}`;
         block.appendChild(betEl);
+    }
+    if (isActive && playerBalance !== undefined) {
+        const balEl = document.createElement('div');
+        balEl.className = 'seat-balance';
+        balEl.textContent = `Bank: $${Math.round(playerBalance)}`;
+        block.appendChild(balEl);
     }
 
     return block;

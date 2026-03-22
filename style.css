@@ -255,15 +255,15 @@ h1 {
     align-items: flex-start;
 }
 
-/* Individual hand block */
+/* Individual hand block — sizes to its card content */
 .hand {
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     background: rgba(0,0,0,0.18);
     border-radius: 4px;
-    padding: 2px 3px;
+    padding: 4px 5px;
     border: 1px solid transparent;
 }
 
@@ -277,10 +277,27 @@ h1 {
 }
 
 .hand .handHeader {
-    font-size: 8px;
-    color: rgba(255,255,220,0.8);
+    font-size: 11px;
+    font-weight: bold;
+    color: rgba(255,255,220,0.95);
     white-space: nowrap;
 }
+
+/* Scale hand text with card size */
+#bj-table[data-players="1"] .hand .handHeader { font-size: 18px; }
+#bj-table[data-players="2"] .hand .handHeader { font-size: 15px; }
+#bj-table[data-players="3"] .hand .handHeader { font-size: 13px; }
+#bj-table[data-players="4"] .hand .handHeader { font-size: 12px; }
+
+#bj-table[data-players="1"] .hand-bet,
+#bj-table[data-players="1"] .seat-balance { font-size: 13px; }
+#bj-table[data-players="2"] .hand-bet,
+#bj-table[data-players="2"] .seat-balance { font-size: 11px; }
+#bj-table[data-players="3"] .hand-bet,
+#bj-table[data-players="3"] .seat-balance { font-size: 10px; }
+
+#bj-table[data-players="1"] .result-badge { font-size: 12px; padding: 2px 8px; }
+#bj-table[data-players="2"] .result-badge { font-size: 10px; padding: 2px 6px; }
 
 /* Cards within a hand — overlap slightly */
 .cards {
