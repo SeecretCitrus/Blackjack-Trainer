@@ -254,48 +254,101 @@ function copySimResults() {
             r.bustPct.toFixed(1).padStart(7)
         );
     }
-    showCopyTextarea(lines.join('\n'), 'copySimBtn');
+    showCopyTextarea(lines.join('\n'));
 }
 
-// Shared helper — shows a pre-selected textarea for reliable copy-paste
-function showCopyTextarea(text, anchorId) {
-    // Remove any existing textarea
-    const existing = document.getElementById('_copyTA');
+// Shared helper — fixed modal overlay, always visible, no DOM insertion issues
+function showCopyTextarea(text) {
+    const existing = document.getElementById('_copyModal');
     if (existing) existing.remove();
 
-    const wrap = document.createElement('div');
-    wrap.id = '_copyTA';
-    wrap.style.cssText = 'margin-top:12px;padding:12px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,215,0,0.3);border-radius:8px;';
+    // Dark backdrop
+    const backdrop = document.createElement('div');
+    backdrop.id = '_copyModal';
+    backdrop.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'background:rgba(0,0,0,0.72)',
+        'z-index:9999',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+    ].join(';');
+
+    // Modal box
+    const box = document.createElement('div');
+    box.style.cssText = [
+        'background:#1a3a2a',
+        'border:1px solid rgba(255,215,0,0.45)',
+        'border-radius:10px',
+        'padding:20px',
+        'width:min(680px,90vw)',
+        'display:flex',
+        'flex-direction:column',
+        'gap:10px',
+        'box-shadow:0 8px 40px rgba(0,0,0,0.7)',
+    ].join(';');
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;color:rgba(255,215,0,0.85);letter-spacing:1px;font-weight:bold;';
+    title.textContent = 'Copy for Claude';
 
     const hint = document.createElement('div');
-    hint.style.cssText = 'font-size:11px;color:rgba(255,215,0,0.7);margin-bottom:6px;letter-spacing:1px;';
-    hint.textContent = 'Select All (Ctrl+A) then Copy (Ctrl+C):';
+    hint.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.55);';
+    hint.textContent = 'Click inside the box, then Ctrl+A to select all, then Ctrl+C to copy.';
 
     const ta = document.createElement('textarea');
     ta.readOnly = true;
     ta.value = text;
-    ta.style.cssText = 'width:100%;height:200px;background:rgba(0,0,0,0.6);color:rgba(255,255,220,0.9);border:1px solid rgba(255,255,255,0.15);border-radius:5px;font-size:11px;font-family:monospace;padding:8px;resize:vertical;line-height:1.5;display:block;';
+    ta.style.cssText = [
+        'width:100%',
+        'height:260px',
+        'background:rgba(0,0,0,0.55)',
+        'color:rgba(255,255,220,0.92)',
+        'border:1px solid rgba(255,255,255,0.2)',
+        'border-radius:6px',
+        'font-size:11px',
+        'font-family:monospace',
+        'padding:10px',
+        'resize:vertical',
+        'line-height:1.5',
+        'cursor:text',
+    ].join(';');
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy to clipboard';
+    copyBtn.style.cssText = 'font-size:12px;padding:5px 16px;border:1px solid rgba(255,215,0,0.5);background:rgba(255,215,0,0.15);color:gold;border-radius:5px;cursor:pointer;';
+    copyBtn.onclick = () => {
+        ta.select();
+        try {
+            const ok = document.execCommand('copy');
+            copyBtn.textContent = ok ? 'Copied!' : 'Select manually (Ctrl+A, Ctrl+C)';
+        } catch(e) {
+            copyBtn.textContent = 'Select manually (Ctrl+A, Ctrl+C)';
+        }
+        setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 2500);
+    };
 
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Close';
-    closeBtn.style.cssText = 'margin-top:6px;font-size:11px;padding:3px 12px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.7);border-radius:4px;cursor:pointer;';
-    closeBtn.onclick = () => wrap.remove();
+    closeBtn.style.cssText = 'font-size:12px;padding:5px 16px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.7);border-radius:5px;cursor:pointer;';
+    closeBtn.onclick = () => backdrop.remove();
+    backdrop.onclick = (e) => { if (e.target === backdrop) backdrop.remove(); };
 
-    wrap.appendChild(hint);
-    wrap.appendChild(ta);
-    wrap.appendChild(closeBtn);
+    btnRow.appendChild(copyBtn);
+    btnRow.appendChild(closeBtn);
+    box.appendChild(title);
+    box.appendChild(hint);
+    box.appendChild(ta);
+    box.appendChild(btnRow);
+    backdrop.appendChild(box);
+    document.body.appendChild(backdrop);
 
-    // Insert after the anchor button's parent
-    const anchor = document.getElementById(anchorId);
-    if (anchor && anchor.parentNode) {
-        anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
-    } else {
-        document.getElementById('simResults')?.appendChild(wrap) ||
-        document.getElementById('optResults')?.appendChild(wrap);
-    }
-
-    // Auto-select
-    setTimeout(() => { ta.focus(); ta.select(); }, 30);
+    // Select all text immediately
+    setTimeout(() => { ta.focus(); ta.select(); }, 40);
 }
 
 function pct(val) {
@@ -559,5 +612,5 @@ function copyOptResults() {
         PAIR_VALUES.slice().reverse().map(pv => ({ label: pv===11?'A,A':pv+','+pv, pairCard: pv })),
         (r,dv) => r.pairCard+'_'+dv, 'pair');
 
-    showCopyTextarea(lines.join('\n'), 'copyOptBtn');
+    showCopyTextarea(lines.join('\n'));
 }
