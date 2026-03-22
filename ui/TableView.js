@@ -272,13 +272,26 @@ function buildHand(hand, isActive, phase, numPlayers = 1) {
     else if (hand.isFinished) cls += ' finishedHand';
     block.className = cls;
 
-    // Result badge (shown after round)
+    // Result badge + net amount (shown after round)
     if (phase === 'ROUND_OVER' && hand.result) {
         const badge = document.createElement('div');
         badge.className = 'result-badge result-' + hand.result;
         const labels = { win: '✓ Win', loss: '✗ Loss', push: '= Push', blackjack: '★ BJ' };
         badge.textContent = labels[hand.result] ?? hand.result;
         block.appendChild(badge);
+
+        // Net dollar amount for this hand
+        if (hand.bet > 0) {
+            const netEl = document.createElement('div');
+            let net = 0;
+            if (hand.result === 'win')       net = +hand.bet;
+            if (hand.result === 'blackjack') net = +Math.floor(hand.bet * 1.5);
+            if (hand.result === 'loss')      net = -hand.bet;
+            if (hand.result === 'push')      net = 0;
+            netEl.className = 'hand-net ' + (net > 0 ? 'hand-net-win' : net < 0 ? 'hand-net-loss' : 'hand-net-push');
+            netEl.textContent = (net > 0 ? '+' : '') + '$' + Math.abs(net);
+            block.appendChild(netEl);
+        }
     }
 
     const header = document.createElement('div');

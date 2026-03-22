@@ -760,3 +760,20 @@ a.btn-link:hover { background: rgba(255,255,255,0.15); }
     pointer-events: auto;
     cursor: default;
 }
+
+/* ======================================================
+   WIN/LOSS NET AMOUNT
+====================================================== */
+.hand-net {
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+.hand-net-win  { color: #6ddb8a; }
+.hand-net-loss { color: #e07070; }
+.hand-net-push { color: rgba(255,255,255,0.4); }
+
+#bj-table[data-players="1"] .hand-net { font-size: 14px; }
+#bj-table[data-players="2"] .hand-net { font-size: 12px; }

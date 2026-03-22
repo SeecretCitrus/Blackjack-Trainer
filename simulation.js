@@ -317,6 +317,24 @@ function renderOptTables(results, rules) {
     const dealerLabels = ['2','3','4','5','6','7','8','9','10','A'];
     let html = '';
 
+    // EV explainer box
+    html += `<div class="ev-explainer">
+        <div class="ev-exp-title">What is EV?</div>
+        <div class="ev-exp-body">
+            EV (Expected Value) is the average amount you win or lose per $1 bet when making a specific action repeatedly.
+            <br><br>
+            <strong>EV = (total net winnings) / (hands played)</strong>
+            <br><br>
+            Examples: EV <span class="ev-pos">+0.15</span> means win 15¢ per $1 bet.
+            EV <span class="ev-neg">-0.35</span> means lose 35¢ per $1 bet.
+            A double win scores <span class="ev-pos">+2.0</span> (win 2× the original bet).
+            <br><br>
+            The edge shown in each cell is the EV difference between the best and second-best action —
+            a small edge (±0.01) means the two actions are nearly equal; a large edge (0.3+) means
+            the best action is clearly superior.
+        </div>
+    </div>`;
+
     // Helper: render one strategy table
     function tableHTML(title, rows, getCellData) {
         let t = `<div class="opt-section"><div class="opt-section-title">${title}</div>`;
@@ -330,15 +348,18 @@ function renderOptTables(results, rules) {
                 const d = getCellData(row, dv);
                 if (!d) { t += `<td>—</td>`; continue; }
 
-                const same = d.sim === d.basic;
-                const evDiff = d.bestEV !== undefined && d.secondEV !== undefined
-                    ? (d.bestEV - d.secondEV).toFixed(3)
-                    : null;
+                const same  = d.sim === d.basic;
+                const edge  = (d.bestEV - d.secondEV);
+                const edgeStr = (edge >= 0 ? '+' : '') + edge.toFixed(3);
+                // EV of best action formatted to 2dp
+                const evStr = (d.bestEV >= 0 ? '+' : '') + d.bestEV.toFixed(2);
 
-                t += `<td class="opt-cell ${same ? 'cell-same' : 'cell-diff'}" title="Sim: ${d.sim} | Basic: ${d.basic} | EV edge: ${evDiff ?? '?'}">`;
+                const tooltip = `Sim best: ${d.sim} (EV ${evStr}) | Basic: ${d.basic} | Edge over 2nd: ${edgeStr}`;
+
+                t += `<td class="opt-cell ${same ? 'cell-same' : 'cell-diff'}" title="${tooltip}">`;
                 t += `<span class="cell-action">${d.sim}</span>`;
                 if (!same) t += `<span class="cell-basic">${d.basic}</span>`;
-                if (evDiff) t += `<span class="cell-ev">${evDiff > 0 ? '+' : ''}${evDiff}</span>`;
+                t += `<span class="cell-ev ${d.bestEV >= 0 ? 'ev-pos-small' : 'ev-neg-small'}">${evStr}</span>`;
                 t += `</td>`;
             }
             t += `</tr>`;
@@ -354,8 +375,7 @@ function renderOptTables(results, rules) {
         const data = results.hard[key];
         if (!data) return null;
         const basic = basicAction('hard', row.total, dv, null, mockRules);
-        const evs   = Object.entries(data).filter(([k]) => ['H','S','D'].includes(k)).sort((a,b) => b[1]-a[1]);
-        return { sim: data.best, basic, bestEV: data.bestEV, secondEV: evs[1]?.[1] };
+        return { sim: data.best, basic, bestEV: data.bestEV, secondEV: data.secondEV };
     });
 
     // Soft totals
@@ -365,8 +385,7 @@ function renderOptTables(results, rules) {
         const data = results.soft[key];
         if (!data) return null;
         const basic = basicAction('soft', row.total, dv, null, mockRules);
-        const evs   = Object.entries(data).filter(([k]) => ['H','S','D'].includes(k)).sort((a,b) => b[1]-a[1]);
-        return { sim: data.best, basic, bestEV: data.bestEV, secondEV: evs[1]?.[1] };
+        return { sim: data.best, basic, bestEV: data.bestEV, secondEV: data.secondEV };
     });
 
     // Pairs
@@ -379,8 +398,7 @@ function renderOptTables(results, rules) {
         const data = results.pair[key];
         if (!data) return null;
         const basic = basicAction('pair', row.pairCard * 2, dv, row.pairCard, mockRules);
-        const evs   = Object.entries(data).filter(([k]) => ['H','S','D','P'].includes(k)).sort((a,b) => b[1]-a[1]);
-        return { sim: data.best, basic, bestEV: data.bestEV, secondEV: evs[1]?.[1] };
+        return { sim: data.best, basic, bestEV: data.bestEV, secondEV: data.secondEV };
     });
 
     optTableWrap.innerHTML = html;
