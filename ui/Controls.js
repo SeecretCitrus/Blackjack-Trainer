@@ -327,6 +327,9 @@ function setupControls() {
         applyCardScale(numPlayers);
         buildBetPanel();
         game.startRound();
+        // Clear bet panel once round has started — bets are locked
+        const bp = document.getElementById("betPanel");
+        if (bp) bp.innerHTML = "";
         refreshUI();
         maybeRunBots();
     });
@@ -338,8 +341,12 @@ function setupControls() {
 
     document.getElementById("nextRoundBtn").addEventListener("click", () => {
         if (!game || game.phase !== "ROUND_OVER") return;
+        applyCardScale(game.players.length);
         buildBetPanel();
         game.startRound();
+        // Clear bet panel once round has started — bets are now locked in
+        const bp = document.getElementById("betPanel");
+        if (bp) bp.innerHTML = "";
         refreshUI();
         maybeRunBots();
     });

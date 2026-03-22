@@ -60,7 +60,7 @@ h1 {
 
 .inscription {
     position: absolute;
-    top: 55%;
+    top: 65%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
@@ -155,11 +155,13 @@ h1 {
 
 /* ======================================================
    TABLE HEIGHT BY PLAYER COUNT
+   Fewer players = bigger cards = more vertical space needed
 ====================================================== */
-#bj-table[data-players="1"] { height: 38vh; }
-#bj-table[data-players="2"] { height: 40vh; }
-#bj-table[data-players="3"] { height: 42vh; }
-#bj-table[data-players="4"] { height: 44vh; }
+#bj-table[data-players="1"] { height: 58vh; }
+#bj-table[data-players="2"] { height: 54vh; }
+#bj-table[data-players="3"] { height: 52vh; }
+#bj-table[data-players="4"] { height: 50vh; }
+#bj-table[data-players="5"] { height: 48vh; }
 
 /* ======================================================
    CARD SCALING BY PLAYER COUNT
@@ -331,15 +333,16 @@ h1 {
    BET / BALANCE UNDER HAND
 ====================================================== */
 .hand-bet {
-    font-size: 8px;
-    color: rgba(255,215,0,0.7);
+    font-size: 9px;
+    color: rgba(255,215,0,0.85);
     text-align: center;
     white-space: nowrap;
+    margin-top: 2px;
 }
 
 .seat-balance {
-    font-size: 8px;
-    color: rgba(255,215,0,0.5);
+    font-size: 9px;
+    color: rgba(255,215,0,0.6);
     text-align: center;
     white-space: nowrap;
 }
