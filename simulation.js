@@ -188,31 +188,47 @@ function renderResults(s) {
         </div>
     </div>`;
 
-    // Starting hand breakdown table — color-coded by win rate
-    html += `<div class="opt-section-title" style="margin-top:16px">Starting hand breakdown</div>`;
-    html += `<p class="sim-note">Win % colored green→red. Hover a cell for full stats.</p>`;
-    html += `<table class="sim-breakdown-table"><thead>
-        <tr>
-            <th>Starting hand</th>
-            <th>Hands</th>
-            <th>Win %</th>
-            <th>Loss %</th>
-            <th>Push %</th>
-            <th>Bust %</th>
-        </tr></thead><tbody>`;
+    // Starting hand breakdown — split by hand type, matching optimizer table style
+    const bdHard = s.handBreakdown.filter(r => r.label.startsWith('Hard'));
+    const bdSoft = s.handBreakdown.filter(r => r.label.startsWith('Soft'));
+    const bdPair = s.handBreakdown.filter(r => r.label.startsWith('Pair'));
 
-    for (const row of s.handBreakdown) {
-        const winColor = winRateColor(row.winPct);
-        html += `<tr>
-            <td class="bd-label">${row.label}</td>
-            <td class="bd-num">${row.hands.toLocaleString()}</td>
-            <td class="bd-win" style="background:${winColor}" title="${row.label}: W${row.winPct.toFixed(1)} L${row.lossPct.toFixed(1)} P${row.pushPct.toFixed(1)} B${row.bustPct.toFixed(1)}">${row.winPct.toFixed(1)}%</td>
-            <td class="bd-num">${row.lossPct.toFixed(1)}%</td>
-            <td class="bd-num">${row.pushPct.toFixed(1)}%</td>
-            <td class="bd-num">${row.bustPct.toFixed(1)}%</td>
-        </tr>`;
+    function bdSection(title, rows) {
+        if (!rows.length) return '';
+        let t = `<div class="opt-section">`;
+        t += `<div class="opt-section-title">${title}</div>`;
+        t += `<table class="sim-breakdown-table"><thead><tr>
+            <th style="text-align:left">Hand</th>
+            <th>Hands</th><th>Win %</th><th>Loss %</th><th>Push %</th><th>Bust %</th>
+        </tr></thead><tbody>`;
+        for (const row of rows) {
+            const wc = winRateColor(row.winPct);
+            // Shorten label for display: "Hard 16" → "16", "Soft 18" → "A+8", "Pair of 8s" → "8,8"
+            let lbl = row.label;
+            if (lbl.startsWith('Hard '))      lbl = lbl.replace('Hard ', '');
+            else if (lbl.startsWith('Soft ')) lbl = 'A+' + (parseInt(lbl.replace('Soft ','')) - 11);
+            else if (lbl.startsWith('Pair of ')) {
+                const v = lbl.replace('Pair of ','').replace('s','');
+                lbl = v === '11' ? 'A,A' : v + ',' + v;
+            }
+            t += `<tr>
+                <td class="opt-row-label">${lbl}</td>
+                <td class="bd-num">${row.hands.toLocaleString()}</td>
+                <td class="bd-win" style="background:${wc}" title="${row.label}: W${row.winPct.toFixed(1)} L${row.lossPct.toFixed(1)} P${row.pushPct.toFixed(1)} B${row.bustPct.toFixed(1)}">${row.winPct.toFixed(1)}%</td>
+                <td class="bd-num">${row.lossPct.toFixed(1)}%</td>
+                <td class="bd-num">${row.pushPct.toFixed(1)}%</td>
+                <td class="bd-num">${row.bustPct.toFixed(1)}%</td>
+            </tr>`;
+        }
+        t += `</tbody></table></div>`;
+        return t;
     }
-    html += `</tbody></table>`;
+
+    html += `<div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start">`;
+    html += bdSection('Hard totals', bdHard);
+    html += bdSection('Soft totals', bdSoft);
+    html += bdSection('Pairs', bdPair);
+    html += `</div>`;
 
 
     html += `<div style="margin-top:14px;text-align:right">
@@ -322,14 +338,23 @@ function showCopyTextarea(text) {
     copyBtn.textContent = 'Copy to clipboard';
     copyBtn.style.cssText = 'font-size:12px;padding:5px 16px;border:1px solid rgba(255,215,0,0.5);background:rgba(255,215,0,0.15);color:gold;border-radius:5px;cursor:pointer;';
     copyBtn.onclick = () => {
-        ta.select();
-        try {
-            const ok = document.execCommand('copy');
-            copyBtn.textContent = ok ? 'Copied!' : 'Select manually (Ctrl+A, Ctrl+C)';
-        } catch(e) {
-            copyBtn.textContent = 'Select manually (Ctrl+A, Ctrl+C)';
+        // navigator.clipboard.writeText is the correct modern API for HTTPS
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 2500);
+            }).catch(() => {
+                // Permission denied — fall back to manual selection
+                ta.focus(); ta.select();
+                copyBtn.textContent = 'Ctrl+C to copy';
+                setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 3000);
+            });
+        } else {
+            // Older browser fallback — select the textarea and rely on user Ctrl+C
+            ta.focus(); ta.select();
+            copyBtn.textContent = 'Ctrl+C to copy';
+            setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 3000);
         }
-        setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 2500);
     };
 
     const closeBtn = document.createElement('button');
