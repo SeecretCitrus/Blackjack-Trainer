@@ -333,12 +333,17 @@ function setupControls() {
         if (countOn) {
             counter = new CardCounter(numDecks, system);
             counter.active = true;
-            // Hook into game shoe reshuffle
+            // Hook deal() so every card is counted as it leaves the shoe
+            hookCounterIntoShoe();
+            // Re-hook after reshuffles (checkShuffle creates a new Shoe object)
             const origCheckShuffle = game.checkShuffle.bind(game);
             game.checkShuffle = function() {
                 const before = this.shoe.cards.length;
                 origCheckShuffle();
-                if (this.shoe.cards.length > before) counter.reset();
+                if (this.shoe.cards.length > before) {
+                    counter.reset();
+                    hookCounterIntoShoe();
+                }
             };
         } else {
             counter = null;
@@ -438,92 +443,36 @@ function updateExplanationPanel() {
 // ======================================================
 // Card counting helpers
 // ======================================================
+// The counter works by intercepting the shoe's deal() method
+// so every card dealt — whether to a player, dealer, or as a
+// hole card — is counted immediately and automatically.
+// The running count therefore persists correctly across the
+// whole shoe with no manual tracking needed.
 
-// Count all currently visible cards on the table
-// Called on deal so we count the initial two cards per player and dealer upcard
-function countVisibleCards() {
+function hookCounterIntoShoe() {
     if (!counter || !game) return;
-    counter.reset(); // recount from scratch each round start to stay accurate
-
-    // Count dealer upcard only (hole card is hidden)
-    const dealerHand = game.dealer.hands[0];
-    if (dealerHand && dealerHand.cards.length > 0) {
-        counter.countCard(dealerHand.cards[0]); // upcard visible
-    }
-
-    // Count all player cards (all visible)
-    for (const player of game.players) {
-        for (const hand of player.hands) {
-            for (const card of hand.cards) {
-                counter.countCard(card);
-            }
+    const shoe = game.shoe;
+    if (shoe._countHooked) return; // already hooked
+    const origDeal = shoe.deal.bind(shoe);
+    shoe.deal = function() {
+        const card = origDeal();
+        if (card && counter) {
+            counter.countCard(card);
         }
-    }
-
-    // Count cards dealt in previous rounds too (running count persists across rounds)
-    // We do this by counting total cards dealt = totalCards - remaining
-    // But since we reset above, we need the cumulative count
-    // Solution: don't reset — track incrementally via countNewCards instead
-    // Revert: don't reset here, just count new cards
-    // Actually the correct approach is countNewCards for mid-round actions
-    // and countDealCards just for the initial deal
+        return card;
+    };
+    shoe._countHooked = true;
 }
 
-// Count only newly dealt cards since last check
-// Used after each action to count any new cards that appeared
-let _lastCountedCards = 0;
-function countNewCards() {
+// Re-hook when shoe reshuffles (new Shoe object created in checkShuffle)
+function rehookAfterShuffle() {
     if (!counter || !game) return;
-    // Count total cards on table now vs last time
-    let totalOnTable = 0;
-    const dealerHand = game.dealer.hands[0];
-    if (dealerHand) totalOnTable += dealerHand.cards.length;
-    for (const player of game.players) {
-        for (const hand of player.hands) {
-            totalOnTable += hand.cards.length;
-        }
-    }
-    // If cards increased, count the new visible ones
-    // Simpler: just re-derive count from all visible cards each time
+    hookCounterIntoShoe();
 }
 
-// Recount all visible cards from scratch — most reliable approach
-function recountAllVisible() {
-    if (!counter || !game) return;
-    // Save running count from before this round
-    const prevCount = counter._prevRoundCount ?? 0;
-    counter.runningCount = prevCount;
-    counter.aceSideCount = counter._prevAceSideCount ?? 0;
-
-    const dealerHand = game.dealer.hands[0];
-    if (dealerHand) {
-        // Only count upcard (index 0) — hole card revealed only at round end
-        if (dealerHand.cards.length > 0) {
-            counter.countCard(dealerHand.cards[0]);
-        }
-        // At round over, count hole card too
-        if (game.phase === 'ROUND_OVER' && dealerHand.cards.length > 1) {
-            for (let i = 1; i < dealerHand.cards.length; i++) {
-                counter.countCard(dealerHand.cards[i]);
-            }
-        }
-    }
-    for (const player of game.players) {
-        for (const hand of player.hands) {
-            for (const card of hand.cards) {
-                counter.countCard(card);
-            }
-        }
-    }
-}
-
-// Called on Next Round — save end-of-round count so next round starts from it
-function saveRoundCount() {
-    if (!counter) return;
-    counter._prevRoundCount    = counter.runningCount;
-    counter._prevAceSideCount  = counter.aceSideCount;
-    counter.cardsDealt         = game.startingDeckSize - game.shoe.cards.length;
-}
+// No-op stubs — kept so existing call sites don't break
+function countVisibleCards() {}
+function countNewCards() {}
 
 // Update the count display panel
 function updateCountPanel() {
@@ -539,8 +488,6 @@ function updateCountPanel() {
         return;
     }
 
-    recountAllVisible();
-
     const tc      = counter.getTrueCount();
     const rc      = counter.runningCount;
     const decks   = counter.getDecksRemaining().toFixed(1);
@@ -550,6 +497,45 @@ function updateCountPanel() {
 
     const tcStr = (tc >= 0 ? '+' : '') + tc.toFixed(1);
     const rcStr = (rc >= 0 ? '+' : '') + rc;
+
+    const aceHtml = counter.usesAceSideCount ? (() => {
+        const surplus = counter.getAceSurplus();
+        const sStr = (surplus >= 0 ? '+' : '') + surplus.toFixed(1);
+        const col = surplus > 0 ? '#6ddb8a' : surplus < 0 ? '#e07070' : 'rgba(255,255,255,0.5)';
+        return `<div class="count-ace-row">Ace surplus: <span style="color:${col}">${sStr}</span> per deck remaining</div>`;
+    })() : '';
+
+    const guideHtml = counter.usesAceSideCount ? `
+        <details class="count-guide">
+            <summary>How to use Omega II</summary>
+            <div class="count-guide-body">
+                <b>Card values:</b><br>
+                2, 3, 7 → <span style="color:#6ddb8a">+1</span> &nbsp;
+                4, 5, 6 → <span style="color:#6ddb8a">+2</span> &nbsp;
+                9 → <span style="color:#e07070">−1</span> &nbsp;
+                10–K → <span style="color:#e07070">−2</span> &nbsp;
+                Ace → 0 (side count)<br><br>
+                <b>Running count:</b> Add/subtract as each card is dealt.<br>
+                <b>True count:</b> Running ÷ decks remaining. More accurate at depth.<br>
+                <b>Ace side count:</b> Count aces seen separately. Positive surplus = more aces left = good for player.<br>
+                <b>Bet spread:</b> Bet 1× at TC ≤1, 2× at TC 2, 4× at TC 3, 6× at TC 4, 8× at TC ≥5.<br>
+                <b>Expected edge:</b> ~+1% per true count point above 0.
+            </div>
+        </details>` : `
+        <details class="count-guide">
+            <summary>How to use Hi-Lo</summary>
+            <div class="count-guide-body">
+                <b>Card values:</b><br>
+                2–6 → <span style="color:#6ddb8a">+1</span> (low cards, good for dealer) &nbsp;
+                7–9 → 0 (neutral) &nbsp;
+                10–A → <span style="color:#e07070">−1</span> (high cards, good for player)<br><br>
+                <b>Running count:</b> Start at 0. Add/subtract as each card is dealt.<br>
+                <b>True count:</b> Running count ÷ decks remaining. Always use true count for decisions.<br>
+                <b>Bet spread:</b> Bet 1× at TC ≤1, 2× at TC 2, 4× at TC 3, 6× at TC 4, 8× at TC ≥5.<br>
+                <b>Why it works:</b> High cards (10s, Aces) favor the player — blackjacks pay 3:2 and the dealer busts more. A positive count means more high cards remain.<br>
+                <b>Expected edge:</b> ~+0.5% per true count point above 0.
+            </div>
+        </details>`;
 
     let html = `<div class="count-panel">
         <div class="count-system">${sysName}</div>
@@ -567,19 +553,15 @@ function updateCountPanel() {
                 <div class="count-val">${decks}</div>
             </div>
             <div class="count-cell">
-                <div class="count-lbl">Bet</div>
-                <div class="count-val" style="color:${label.color}">${mult}×</div>
+                <div class="count-lbl">Bet ×</div>
+                <div class="count-val" style="color:${label.color}">${mult}</div>
             </div>
         </div>
-        <div class="count-label-bar" style="color:${label.color}">${label.text} — ${label.bet}</div>`;
+        <div class="count-label-bar" style="color:${label.color}">${label.text} — ${label.bet}</div>
+        ${aceHtml}
+        ${guideHtml}
+    </div>`;
 
-    if (counter.usesAceSideCount) {
-        const surplus = counter.getAceSurplus();
-        const sStr = (surplus >= 0 ? '+' : '') + surplus.toFixed(1);
-        html += `<div class="count-ace-row">Ace surplus: <span style="color:${surplus > 0 ? '#6ddb8a' : surplus < 0 ? '#e07070' : 'rgba(255,255,255,0.5)'}">${sStr}</span> per remaining deck</div>`;
-    }
-
-    html += `</div>`;
     panel.innerHTML = html;
 }
 

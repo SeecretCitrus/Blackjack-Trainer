@@ -202,6 +202,151 @@ class Simulator {
             handBreakdown:   breakdownArray,
         };
     }
+
+    // ======================================================
+    // Counting simulation — compares flat betting vs bet spreading
+    // Returns stats with true count distribution
+    // ======================================================
+    static runCountingDetailed({
+        numRounds    = 500000,
+        numDecks     = 6,
+        S17          = true,
+        payout       = 1.5,
+        countSystem  = 'hilo',
+        spread       = 8,
+        onProgress   = null,
+    } = {}) {
+        const rules = {
+            dealerHitsSoft17: S17,
+            doubleAfterSplit: true,
+            resplitAces:      false,
+            lateSurrender:    false,
+            blackjackPayout:  payout,
+        };
+
+        // Card values for each system
+        const HILO = { '2':1,'3':1,'4':1,'5':1,'6':1,'7':0,'8':0,'9':0,
+                       '10':-1,'Jack':-1,'Queen':-1,'King':-1,'Ace':-1 };
+        const OMEGA2 = { '2':1,'3':1,'4':2,'5':2,'6':2,'7':1,'8':0,'9':-1,
+                         '10':-2,'Jack':-2,'Queen':-2,'King':-2,'Ace':0 };
+        const cardVals = countSystem === 'omega2' ? OMEGA2 : HILO;
+
+        // Bet spread function: true count → bet multiplier
+        function getBetMult(tc) {
+            const maxMult = spread;
+            if (tc <= 1)  return 1;
+            if (tc <= 2)  return Math.min(2, maxMult);
+            if (tc <= 3)  return Math.min(Math.round(maxMult * 0.5), maxMult);
+            if (tc <= 4)  return Math.min(Math.round(maxMult * 0.75), maxMult);
+            return maxMult;
+        }
+
+        const game = new Game(1, numDecks, 'automatic', S17);
+        game.rules = { ...rules, minBet: 1 };
+
+        let runningCount = 0;
+        let totalNet     = 0;
+        let totalWagered = 0;
+        let wins = 0, losses = 0, pushes = 0;
+        let handsPlayed  = 0;
+
+        // True count distribution: key = floored TC, value = { hands, wins, losses, net }
+        const tcDist = {};
+
+        // Hook shoe to track count
+        const origDeal = game.shoe.deal.bind(game.shoe);
+        game.shoe.deal = function() {
+            const card = origDeal();
+            if (card) {
+                const v = cardVals[card.rank] ?? 0;
+                runningCount += v;
+            }
+            return card;
+        };
+
+        const origCheck = game.checkShuffle.bind(game);
+        game.checkShuffle = function() {
+            const before = this.shoe.cards.length;
+            origCheck();
+            if (this.shoe.cards.length > before) {
+                runningCount = 0;
+                // Re-hook after new shoe
+                const od = this.shoe.deal.bind(this.shoe);
+                this.shoe.deal = function() {
+                    const card = od();
+                    if (card) runningCount += (cardVals[card.rank] ?? 0);
+                    return card;
+                };
+            }
+        };
+
+        const CHUNK = 5000;
+        for (let i = 0; i < numRounds; i++) {
+            // Calculate true count before this hand
+            const cardsLeft    = game.shoe.cards.length;
+            const decksLeft    = Math.max(0.5, cardsLeft / 52);
+            const trueCount    = runningCount / decksLeft;
+            const tcBucket     = Math.max(-5, Math.min(6, Math.floor(trueCount)));
+            const betMult      = getBetMult(trueCount);
+            const bet          = betMult; // unit bets
+
+            // Force player bet
+            game.players[0].currentBet = bet;
+            game.players[0].balance    = bet + 1000; // always enough
+
+            game.startRound();
+
+            while (game.phase === 'PLAYER_TURN') {
+                const action = StrategyEngine.getDecision(
+                    game.currentPlayer, game.currentHandIndex,
+                    game.dealer.getUpCard(), game.rules
+                );
+                game.handlePlayerAction(action);
+            }
+
+            // Tally results
+            for (const player of game.players) {
+                for (const hand of player.hands) {
+                    handsPlayed++;
+                    totalWagered += hand.bet;
+                    if (!tcDist[tcBucket]) tcDist[tcBucket] = { hands: 0, net: 0 };
+                    tcDist[tcBucket].hands++;
+
+                    let net = 0;
+                    if (hand.result === 'win')       { net = +hand.bet; wins++;   }
+                    if (hand.result === 'blackjack') { net = +Math.floor(hand.bet * payout); wins++; }
+                    if (hand.result === 'loss')      { net = -hand.bet; losses++; }
+                    if (hand.result === 'push')      { pushes++; }
+                    totalNet += net;
+                    tcDist[tcBucket].net += net;
+                }
+            }
+
+            if (onProgress && i % CHUNK === 0) {
+                onProgress(Math.round(i / numRounds * 100));
+            }
+        }
+
+        if (onProgress) onProgress(100);
+
+        // Compute EV per bucket
+        for (const k of Object.keys(tcDist)) {
+            const d = tcDist[k];
+            d.ev = d.hands > 0 ? d.net / d.hands : 0;
+        }
+
+        const ev = totalWagered > 0 ? totalNet / totalWagered : 0;
+        return {
+            handsPlayed, wins, losses, pushes,
+            totalNet, totalWagered,
+            winRate:  handsPlayed > 0 ? wins   / handsPlayed : 0,
+            lossRate: handsPlayed > 0 ? losses / handsPlayed : 0,
+            pushRate: handsPlayed > 0 ? pushes / handsPlayed : 0,
+            ev,
+            tcDistribution: tcDist,
+            numDecks,
+        };
+    }
 }
 
 export { Simulator };

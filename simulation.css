@@ -527,3 +527,78 @@ body {
 
 /* Wider wrapper for optimizer results */
 #simWrapper { max-width: 1300px; }
+
+/* ======================================================
+   COUNT SIMULATION TAB
+====================================================== */
+#cntLayout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+@media (max-width: 720px) { #cntLayout { grid-template-columns: 1fr; } }
+
+#cntConfig {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+#cntConfig h2 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    color: rgba(255,215,0,0.75);
+    text-transform: uppercase;
+}
+
+#runCntBtn {
+    padding: 9px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,215,0,0.55);
+    background: rgba(255,215,0,0.12);
+    color: gold;
+    cursor: pointer;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: background 0.15s;
+}
+#runCntBtn:hover    { background: rgba(255,215,0,0.22); }
+#runCntBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+#cntProgress { display: flex; flex-direction: column; gap: 5px; }
+#cntProgressBar {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+#cntProgressFill {
+    height: 100%;
+    width: 0%;
+    background: gold;
+    border-radius: 3px;
+    transition: width 0.1s ease;
+}
+#cntProgressLabel { font-size: 11px; color: rgba(255,255,255,0.5); text-align: center; }
+
+#cntResults {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 300px;
+}
+
+#cntPlaceholder {
+    color: rgba(255,255,255,0.4);
+    font-size: 14px;
+    text-align: center;
+    padding: 40px 20px;
+    line-height: 1.9;
+}

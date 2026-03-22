@@ -907,3 +907,150 @@ function copyOptResults() {
 
     showCopyTextarea(lines.join('\n'));
 }
+
+// ======================================================
+// COUNT SIMULATION TAB
+// ======================================================
+import { CardCounter } from './CardCounter.js';
+
+const runCntBtn = document.getElementById('runCntBtn');
+if (runCntBtn) runCntBtn.addEventListener('click', runCountSim);
+
+async function runCountSim() {
+    const numRounds = parseInt(document.getElementById('cntRounds').value);
+    const numDecks  = parseInt(document.getElementById('cntDecks').value);
+    const system    = document.getElementById('cntSystem').value;
+    const S17       = document.getElementById('cntS17').value === 'true';
+    const spread    = parseInt(document.getElementById('cntSpread').value);
+    const payout    = 1.5;
+    const minBet    = 1; // use unit bets for EV calculation
+
+    const btn       = document.getElementById('runCntBtn');
+    const prog      = document.getElementById('cntProgress');
+    const fill      = document.getElementById('cntProgressFill');
+    const lbl       = document.getElementById('cntProgressLabel');
+    const inner     = document.getElementById('cntResultsInner');
+    const ph        = document.getElementById('cntPlaceholder');
+
+    btn.disabled = true;
+    ph.classList.add('hidden');
+    inner.classList.add('hidden');
+    prog.classList.remove('hidden');
+    fill.style.width = '0%';
+
+    // Run flat bettor first (spread=1 means always bet 1 unit)
+    lbl.textContent = 'Running flat bettor...';
+    const flatStats = await runCountSimDetailed({
+        numRounds, numDecks, S17, payout,
+        countSystem: 'hilo', spread: 1,
+        onProgress: p => { fill.style.width = (p/2)+'%'; lbl.textContent = `Flat bettor: ${p}%`; }
+    });
+
+    // Run counter with chosen system and spread
+    lbl.textContent = 'Running card counter...';
+    const countStats = await runCountSimDetailed({
+        numRounds, numDecks, S17, payout,
+        countSystem: system, spread,
+        onProgress: p => { fill.style.width = (50+p/2)+'%'; lbl.textContent = `Counter: ${p}%`; }
+    });
+
+    prog.classList.add('hidden');
+    btn.disabled = false;
+    renderCountResults(flatStats, countStats, system, spread, inner, ph);
+}
+
+function runCountSimDetailed({ numRounds, numDecks, S17, payout, countSystem, spread, onProgress }) {
+    return new Promise(resolve => {
+        // Run directly via Simulator — all logic lives there
+        const results = Simulator.runCountingDetailed({
+            numRounds, numDecks, S17, payout, countSystem, spread, onProgress
+        });
+        resolve(results);
+    });
+}
+
+function renderCountResults(flat, counted, system, spread, inner, ph) {
+    if (!flat || !counted) return;
+
+    const flatEV    = (flat.ev    * 100).toFixed(3);
+    const countEV   = (counted.ev * 100).toFixed(3);
+    const evGain    = ((counted.ev - flat.ev) * 100).toFixed(3);
+    const sysName   = system === 'omega2' ? 'Omega II' : 'Hi-Lo';
+    const better    = counted.ev > flat.ev;
+
+    inner.innerHTML = `
+        <div class="opt-section-title">Counting simulation — ${sysName} | 1–${spread}× spread</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0">
+            <div class="sum-card sum-neg">
+                <div class="sum-label">Flat basic strategy</div>
+                <div class="sum-value">${flat.ev>=0?'+':''}${flatEV}%</div>
+                <div class="sum-sub">EV per hand</div>
+            </div>
+            <div class="sum-card ${counted.ev>=0?'sum-pos':'sum-neg'}">
+                <div class="sum-label">${sysName} + bet spread</div>
+                <div class="sum-value">${counted.ev>=0?'+':''}${countEV}%</div>
+                <div class="sum-sub">EV per unit wagered</div>
+            </div>
+            <div class="sum-card ${better?'sum-pos':'sum-neg'}">
+                <div class="sum-label">EV gain from counting</div>
+                <div class="sum-value" style="color:${better?'#6ddb8a':'#e07070'}">${better?'+':''}${evGain}%</div>
+                <div class="sum-sub">${better?'counting helps':'counting hurts (variance)'}  </div>
+            </div>
+        </div>
+        <div class="opt-section-title" style="margin-top:16px">True count distribution</div>
+        <div id="tcDistWrap" style="margin-top:8px"></div>
+        <div class="ev-explainer" style="margin-top:16px">
+            <div class="ev-exp-title">How to read this</div>
+            <div class="ev-exp-body">
+                The <strong>flat bettor</strong> bets 1 unit every hand and plays perfect basic strategy.
+                The <strong>counter</strong> bets 1 unit at neutral counts and scales up to ${spread} units
+                when the true count is high. Both play identical basic strategy — the only difference is bet sizing.
+                <br><br>
+                EV per unit wagered accounts for the larger bets at high counts. A typical 1–8× spread with
+                Hi-Lo on a 6-deck shoe should yield roughly <strong>+0.5% to +1.0%</strong> player edge — turning
+                the house edge into a small player advantage. The exact gain depends on penetration and spread.
+            </div>
+        </div>
+        <div style="margin-top:14px;text-align:right">
+            <button id="copyCntBtn" class="copy-btn">Copy results for Claude</button>
+        </div>`;
+
+    // Render true count distribution if available
+    if (counted.tcDistribution) {
+        renderTCDist(counted.tcDistribution, document.getElementById('tcDistWrap'));
+    }
+
+    inner.classList.remove('hidden');
+    ph.classList.add('hidden');
+
+    document.getElementById('copyCntBtn')?.addEventListener('click', () => {
+        const lines = [
+            '=== COUNT SIMULATION RESULTS ===',
+            `System: ${sysName} | Spread: 1–${spread}× | Decks: ${counted.numDecks ?? '?'}`,
+            `Flat basic strategy EV: ${flat.ev>=0?'+':''}${flatEV}%`,
+            `${sysName} counter EV:  ${counted.ev>=0?'+':''}${countEV}%`,
+            `EV gain from counting:   ${better?'+':''}${evGain}%`,
+        ];
+        showCopyTextarea(lines.join('\n'));
+    });
+}
+
+function renderTCDist(dist, wrap) {
+    if (!wrap || !dist) return;
+    const keys = Object.keys(dist).map(Number).sort((a,b)=>a-b);
+    const max  = Math.max(...keys.map(k => dist[k].hands));
+    let html   = '<div style="display:flex;gap:3px;align-items:flex-end;height:80px;margin-bottom:4px">';
+    for (const k of keys) {
+        const d   = dist[k];
+        const h   = Math.round((d.hands / max) * 72);
+        const ev  = d.ev !== undefined ? ((d.ev*100).toFixed(1)) : '?';
+        const col = k >= 3 ? '#6ddb8a' : k >= 1 ? '#b8e87c' : k <= -3 ? '#e07070' : k <= -1 ? '#e8a870' : 'rgba(255,255,255,0.35)';
+        html += `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1">
+            <div style="font-size:8px;color:rgba(255,255,255,0.4)">${ev}%</div>
+            <div style="width:100%;height:${h}px;background:${col};border-radius:2px 2px 0 0;min-height:2px" title="TC ${k}: ${d.hands.toLocaleString()} hands, EV ${ev}%"></div>
+            <div style="font-size:8px;color:rgba(255,255,255,0.4)">${k>=0?'+':''}${k}</div>
+        </div>`;
+    }
+    html += '</div><div style="font-size:9px;color:rgba(255,255,255,0.3);text-align:center;letter-spacing:1px">TRUE COUNT DISTRIBUTION — bar height = hands played at that count</div>';
+    wrap.innerHTML = html;
+}

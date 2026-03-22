@@ -18,6 +18,7 @@
     <div id="simTabs">
         <button class="sim-tab active" data-tab="simulator">Simulator</button>
         <button class="sim-tab" data-tab="optimizer">Strategy Optimizer</button>
+        <button class="sim-tab" data-tab="counting">Count Simulation</button>
     </div>
 
     <!-- ══════════════════════════════════════════════
@@ -186,6 +187,70 @@
                     Applying replaces basic strategy in the Simulator and Trainer tabs until you revert.
                 </div>
             </div>
+        </div>
+
+    </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB: COUNT SIMULATION
+    ══════════════════════════════════════════════ -->
+    <div id="tab-counting" class="tab-panel">
+    <div id="cntLayout">
+
+        <div id="cntConfig">
+            <h2>Configuration</h2>
+            <div class="cfg-group">
+                <label>Rounds
+                    <select id="cntRounds">
+                        <option value="100000">100,000</option>
+                        <option value="500000" selected>500,000</option>
+                        <option value="1000000">1,000,000</option>
+                    </select>
+                </label>
+                <label>Decks
+                    <select id="cntDecks">
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="6" selected>6</option>
+                        <option value="8">8</option>
+                    </select>
+                </label>
+                <label>Counting system
+                    <select id="cntSystem">
+                        <option value="hilo" selected>Hi-Lo</option>
+                        <option value="omega2">Omega II</option>
+                    </select>
+                </label>
+                <label>Dealer Soft 17
+                    <select id="cntS17">
+                        <option value="false">Stand (S17)</option>
+                        <option value="true" selected>Hit (H17)</option>
+                    </select>
+                </label>
+                <label>Bet spread
+                    <select id="cntSpread">
+                        <option value="4">1–4× (conservative)</option>
+                        <option value="8" selected>1–8× (standard)</option>
+                        <option value="12">1–12× (aggressive)</option>
+                    </select>
+                </label>
+            </div>
+            <button id="runCntBtn">▶ Run Count Simulation</button>
+            <div id="cntProgress" class="hidden">
+                <div id="cntProgressBar"><div id="cntProgressFill"></div></div>
+                <div id="cntProgressLabel">Running...</div>
+            </div>
+        </div>
+
+        <div id="cntResults">
+            <div id="cntPlaceholder">
+                Simulates two players side by side: one playing flat basic strategy,
+                one using the selected counting system with bet spreading.
+                <br><br>
+                Shows the actual EV gain from counting under real shoe conditions.
+            </div>
+            <div id="cntResultsInner" class="hidden"></div>
         </div>
 
     </div>

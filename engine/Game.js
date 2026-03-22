@@ -21,8 +21,8 @@ class Game {
         this.silent  = mode === "automatic";
         this.maxSplits = 3;
 
-        this.penetrationMax = 80;
-        this.penetrationMin = 65;
+        this.penetrationMax = 75;
+        this.penetrationMin = 60;
         this.penetration    = (Math.random() * (this.penetrationMax - this.penetrationMin + 1) + this.penetrationMin) / 100;
         this.startingDeckSize = numDecks * 52;
 
@@ -257,7 +257,7 @@ class Game {
 
         if (action === "H") {
             this.hit(player, handIndex);
-            if (player.getHandValue(handIndex) > 21) {
+            if (player.getHandValue(handIndex) >= 21) {
                 player.hands[handIndex].isFinished = true;
             }
             if (!player.hands[handIndex].isFinished) return;

@@ -694,7 +694,6 @@ a.btn-link:hover { background: rgba(255,255,255,0.15); }
     padding: 1px 3px;
     font-size: 9px;
     text-align: center;
-    appearance: textfield;
     -moz-appearance: textfield;
 }
 .seat-ctrl-input::-webkit-outer-spin-button,
@@ -850,3 +849,32 @@ a.btn-link:hover { background: rgba(255,255,255,0.15); }
     text-align: center;
     color: rgba(255,255,255,0.4);
 }
+
+.count-guide {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 6px;
+    margin-top: 2px;
+}
+
+.count-guide summary {
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: rgba(255,215,0,0.55);
+    cursor: pointer;
+    text-transform: uppercase;
+    user-select: none;
+    list-style: none;
+    text-align: center;
+}
+.count-guide summary::-webkit-details-marker { display: none; }
+.count-guide summary::before { content: '▸ '; }
+.count-guide[open] summary::before { content: '▾ '; }
+
+.count-guide-body {
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.7;
+    margin-top: 8px;
+    padding: 0 4px;
+}
+.count-guide-body b { color: rgba(255,255,255,0.8); }
