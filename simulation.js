@@ -341,31 +341,59 @@ function showCopyTextarea(text) {
     const copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy to clipboard';
     copyBtn.style.cssText = 'font-size:12px;padding:5px 16px;border:1px solid rgba(255,215,0,0.5);background:rgba(255,215,0,0.15);color:gold;border-radius:5px;cursor:pointer;';
-    // Capture text in a local const so the closure is always fresh
     const textToCopy = text;
+
+    function markCopied() {
+        copyBtn.textContent = '✓ Copied!';
+        copyBtn.style.background = 'rgba(80,200,100,0.2)';
+        copyBtn.style.borderColor = 'rgba(80,200,100,0.6)';
+        copyBtn.style.color = '#6ddb8a';
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy to clipboard';
+            copyBtn.style.background = 'rgba(255,215,0,0.15)';
+            copyBtn.style.borderColor = 'rgba(255,215,0,0.5)';
+            copyBtn.style.color = 'gold';
+        }, 2500);
+    }
+
+    function markFallback() {
+        ta.focus();
+        ta.select();
+        copyBtn.textContent = 'Ctrl+C to copy';
+        setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 3000);
+    }
+
     copyBtn.onclick = () => {
+        // Step 1: select the textarea text — this works regardless of focus state
+        // and is required for the execCommand fallback
+        ta.focus();
+        ta.select();
+
+        // Step 2: try modern clipboard API (works on HTTPS when page is focused)
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                copyBtn.textContent = '✓ Copied!';
-                copyBtn.style.background = 'rgba(80,200,100,0.2)';
-                copyBtn.style.borderColor = 'rgba(80,200,100,0.6)';
-                copyBtn.style.color = '#6ddb8a';
-                setTimeout(() => {
-                    copyBtn.textContent = 'Copy to clipboard';
-                    copyBtn.style.background = 'rgba(255,215,0,0.15)';
-                    copyBtn.style.borderColor = 'rgba(255,215,0,0.5)';
-                    copyBtn.style.color = 'gold';
-                }, 2500);
-            }).catch(err => {
-                console.error('Clipboard write failed:', err);
-                ta.focus(); ta.select();
-                copyBtn.textContent = 'Ctrl+C to copy';
-                setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 3000);
-            });
+            navigator.clipboard.writeText(textToCopy)
+                .then(markCopied)
+                .catch(() => {
+                    // Clipboard API failed (e.g. focus issue) — fall back to
+                    // execCommand on the already-selected textarea, which doesn't
+                    // have the same focus requirement
+                    try {
+                        const ok = document.execCommand('copy');
+                        if (ok) markCopied();
+                        else markFallback();
+                    } catch(e) {
+                        markFallback();
+                    }
+                });
         } else {
-            ta.focus(); ta.select();
-            copyBtn.textContent = 'Ctrl+C to copy';
-            setTimeout(() => copyBtn.textContent = 'Copy to clipboard', 3000);
+            // No clipboard API — execCommand on selected textarea
+            try {
+                const ok = document.execCommand('copy');
+                if (ok) markCopied();
+                else markFallback();
+            } catch(e) {
+                markFallback();
+            }
         }
     };
 
