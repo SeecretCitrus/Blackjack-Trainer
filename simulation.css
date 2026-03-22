@@ -241,3 +241,182 @@ body {
 /* EV positive/negative coloring */
 .ev-positive { color: #6ddb8a; }
 .ev-negative { color: #e07070; }
+
+/* ======================================================
+   TABS
+====================================================== */
+#simTabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 0;
+}
+
+.sim-tab {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-bottom: none;
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    padding: 8px 20px;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.sim-tab:hover  { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
+.sim-tab.active { background: rgba(0,0,0,0.35); color: gold; border-color: rgba(255,215,0,0.3); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ======================================================
+   OPTIMIZER LAYOUT
+====================================================== */
+#optLayout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+@media (max-width: 720px) { #optLayout { grid-template-columns: 1fr; } }
+
+#optConfig {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+#optConfig h2 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    color: rgba(255,215,0,0.75);
+    text-transform: uppercase;
+}
+
+#runOptBtn {
+    padding: 9px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,215,0,0.55);
+    background: rgba(255,215,0,0.12);
+    color: gold;
+    cursor: pointer;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: background 0.15s;
+}
+#runOptBtn:hover    { background: rgba(255,215,0,0.22); }
+#runOptBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+#optProgress { display: flex; flex-direction: column; gap: 5px; }
+#optProgressBar {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+#optProgressFill {
+    height: 100%;
+    width: 0%;
+    background: gold;
+    border-radius: 3px;
+    transition: width 0.1s ease;
+}
+#optProgressLabel { font-size: 11px; color: rgba(255,255,255,0.5); text-align: center; }
+
+/* Legend */
+.legend-title { font-size: 10px; letter-spacing: 1px; color: rgba(255,215,0,0.6); text-transform: uppercase; margin-bottom: 6px; }
+.legend-row   { font-size: 12px; color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.leg-same { display:inline-block; padding:1px 6px; background:rgba(80,180,80,0.2); border:1px solid rgba(80,180,80,0.4); border-radius:3px; color:#7ddd7d; font-size:11px; font-weight:bold; }
+.leg-diff { display:inline-block; padding:1px 6px; background:rgba(255,100,60,0.2); border:1px solid rgba(255,100,60,0.4); border-radius:3px; color:#ff8866; font-size:11px; font-weight:bold; }
+.leg-ev   { display:inline-block; font-size:10px; color:rgba(255,215,0,0.7); }
+
+/* Results panel */
+#optResults {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 300px;
+    overflow-x: auto;
+}
+#optPlaceholder {
+    color: rgba(255,255,255,0.4);
+    font-size: 14px;
+    text-align: center;
+    padding: 40px 20px;
+    line-height: 1.8;
+}
+#optPlaceholder strong { color: rgba(255,255,255,0.65); }
+
+/* Optimizer tables */
+.opt-section { margin-bottom: 28px; }
+.opt-section-title {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,215,0,0.65);
+    margin-bottom: 8px;
+}
+
+.opt-table {
+    border-collapse: collapse;
+    font-size: 11px;
+    white-space: nowrap;
+}
+.opt-table th {
+    padding: 4px 8px;
+    background: rgba(0,0,0,0.3);
+    color: rgba(255,255,255,0.55);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+    min-width: 48px;
+}
+.opt-table th:first-child { text-align: left; min-width: 52px; }
+.opt-row-label {
+    padding: 3px 10px 3px 4px;
+    color: rgba(255,255,255,0.6);
+    font-size: 11px;
+    font-weight: bold;
+    border-right: 1px solid rgba(255,255,255,0.08);
+}
+.opt-cell {
+    padding: 2px 4px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.05);
+    cursor: default;
+    vertical-align: middle;
+}
+.opt-cell:hover { background: rgba(255,255,255,0.06); }
+
+/* Matches basic strategy */
+.cell-same { background: rgba(30,80,40,0.4); }
+/* Differs from basic strategy */
+.cell-diff { background: rgba(140,40,20,0.35); outline: 1px solid rgba(255,100,60,0.4); }
+
+.cell-action {
+    display: block;
+    font-weight: bold;
+    font-size: 12px;
+    color: rgba(255,255,220,0.95);
+}
+.cell-basic {
+    display: block;
+    font-size: 9px;
+    color: rgba(255,150,120,0.8);
+    margin-top: 1px;
+}
+.cell-ev {
+    display: block;
+    font-size: 9px;
+    color: rgba(255,215,0,0.55);
+    margin-top: 1px;
+}

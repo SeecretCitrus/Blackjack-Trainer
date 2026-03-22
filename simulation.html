@@ -14,12 +14,20 @@
         <h1>Blackjack Simulator</h1>
     </div>
 
+    <!-- Tab bar -->
+    <div id="simTabs">
+        <button class="sim-tab active" data-tab="simulator">Simulator</button>
+        <button class="sim-tab" data-tab="optimizer">Strategy Optimizer</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB: SIMULATOR
+    ══════════════════════════════════════════════ -->
+    <div id="tab-simulator" class="tab-panel active">
     <div id="simLayout">
 
-        <!-- ── CONFIG PANEL ── -->
         <div id="simConfig">
             <h2>Configuration</h2>
-
             <div class="cfg-group">
                 <label>Hands to simulate
                     <select id="simHands">
@@ -50,7 +58,6 @@
                     </select>
                 </label>
             </div>
-
             <div class="cfg-group">
                 <label>Dealer Soft 17
                     <select id="simS17">
@@ -78,57 +85,116 @@
                     </select>
                 </label>
             </div>
-
             <button id="runSimBtn">▶ Run Simulation</button>
-
             <div id="simProgress" class="hidden">
                 <div id="simProgressBar"><div id="simProgressFill"></div></div>
                 <div id="simProgressLabel">Running...</div>
             </div>
         </div>
 
-        <!-- ── RESULTS PANEL ── -->
         <div id="simResults">
-            <div id="simPlaceholder">
-                Configure a simulation and click <strong>Run</strong> to see results.
-            </div>
-
+            <div id="simPlaceholder">Configure a simulation and click <strong>Run</strong> to see results.</div>
             <div id="simResultsInner" class="hidden">
-
                 <h2>Summary</h2>
                 <div id="summaryGrid"></div>
-
                 <h2>Rates</h2>
                 <table id="ratesTable" class="sim-table">
-                    <thead>
-                        <tr>
-                            <th>Metric</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Metric</th><th>Value</th></tr></thead>
                     <tbody></tbody>
                 </table>
-
                 <h2>Starting Hand Breakdown</h2>
                 <p class="sim-note">Player totals after initial deal, showing outcomes per starting total.</p>
                 <table id="handBreakdownTable" class="sim-table">
-                    <thead>
-                        <tr>
-                            <th>Starting Total</th>
-                            <th>Hands</th>
-                            <th>Win %</th>
-                            <th>Loss %</th>
-                            <th>Push %</th>
-                            <th>Bust %</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Starting Total</th><th>Hands</th><th>Win %</th><th>Loss %</th><th>Push %</th><th>Bust %</th></tr></thead>
                     <tbody></tbody>
                 </table>
-
             </div>
         </div>
 
     </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB: OPTIMIZER
+    ══════════════════════════════════════════════ -->
+    <div id="tab-optimizer" class="tab-panel">
+    <div id="optLayout">
+
+        <div id="optConfig">
+            <h2>Configuration</h2>
+            <div class="cfg-group">
+                <label>Hands per cell
+                    <select id="optHands">
+                        <option value="500">500 (fast)</option>
+                        <option value="2000" selected>2,000 (balanced)</option>
+                        <option value="5000">5,000 (precise)</option>
+                        <option value="10000">10,000 (slow)</option>
+                    </select>
+                </label>
+                <label>Decks
+                    <select id="optDecks">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="6" selected>6</option>
+                        <option value="8">8</option>
+                    </select>
+                </label>
+            </div>
+            <div class="cfg-group">
+                <label>Dealer Soft 17
+                    <select id="optS17">
+                        <option value="false">Stand (S17)</option>
+                        <option value="true" selected>Hit (H17)</option>
+                    </select>
+                </label>
+                <label>Double After Split
+                    <select id="optDAS">
+                        <option value="true" selected>Allowed</option>
+                        <option value="false">Not allowed</option>
+                    </select>
+                </label>
+                <label>Resplit Aces
+                    <select id="optRSA">
+                        <option value="false" selected>No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </label>
+                <label>Blackjack Payout
+                    <select id="optPayout">
+                        <option value="1.5" selected>3:2</option>
+                        <option value="1.2">6:5</option>
+                        <option value="1">1:1</option>
+                    </select>
+                </label>
+            </div>
+            <button id="runOptBtn">▶ Run Optimizer</button>
+            <div id="optProgress" class="hidden">
+                <div id="optProgressBar"><div id="optProgressFill"></div></div>
+                <div id="optProgressLabel">Optimizing...</div>
+            </div>
+            <div id="optLegend" class="hidden">
+                <div class="legend-title">Legend</div>
+                <div class="legend-row"><span class="leg-same">H</span> Matches basic strategy</div>
+                <div class="legend-row"><span class="leg-diff">D</span> Differs from basic strategy</div>
+                <div class="legend-row"><span class="leg-ev">+0.12</span> EV vs next-best action</div>
+            </div>
+        </div>
+
+        <div id="optResults">
+            <div id="optPlaceholder">
+                Configure and click <strong>Run Optimizer</strong> to generate an optimal strategy table derived purely from simulation — no lookup tables used.
+                <br><br>
+                Cells that differ from basic strategy will be highlighted.
+            </div>
+            <div id="optResultsInner" class="hidden">
+                <div id="optTableWrap"></div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+
 </div>
 
 <script src="simulation.js" type="module"></script>

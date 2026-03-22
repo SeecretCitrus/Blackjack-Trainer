@@ -194,3 +194,197 @@ function renderResults(s) {
 function pct(val) {
     return (val * 100).toFixed(2) + "%";
 }
+
+// ======================================================
+// OPTIMIZER TAB
+// ======================================================
+import { StrategyOptimizer, DEALER_VALUES, HARD_TOTALS, SOFT_OTHERS, PAIR_VALUES } from './logic/StrategyOptimizer.js';
+import { StrategyEngine } from './logic/StrategyEngine.js';
+
+// Tab switching
+document.querySelectorAll('.sim-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.sim-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+const runOptBtn    = document.getElementById('runOptBtn');
+const optProgress  = document.getElementById('optProgress');
+const optFill      = document.getElementById('optProgressFill');
+const optLbl       = document.getElementById('optProgressLabel');
+const optPlaceholder = document.getElementById('optPlaceholder');
+const optInner     = document.getElementById('optResultsInner');
+const optTableWrap = document.getElementById('optTableWrap');
+const optLegend    = document.getElementById('optLegend');
+
+runOptBtn.addEventListener('click', async () => {
+    const handsPerCell = parseInt(document.getElementById('optHands').value);
+    const numDecks     = parseInt(document.getElementById('optDecks').value);
+    const S17          = document.getElementById('optS17').value === 'true';
+    const DAS          = document.getElementById('optDAS').value === 'true';
+    const RSA          = document.getElementById('optRSA').value === 'true';
+    const payout       = parseFloat(document.getElementById('optPayout').value);
+
+    runOptBtn.disabled = true;
+    optPlaceholder.classList.add('hidden');
+    optInner.classList.add('hidden');
+    optLegend.classList.add('hidden');
+    optProgress.classList.remove('hidden');
+    optFill.style.width = '0%';
+    optLbl.textContent = 'Optimizing...';
+
+    const totalCells = HARD_TOTALS.length * DEALER_VALUES.length
+                     + SOFT_OTHERS.length * DEALER_VALUES.length
+                     + PAIR_VALUES.length  * DEALER_VALUES.length;
+
+    const results = await StrategyOptimizer.optimize({
+        numDecks, S17, DAS, RSA, payout, handsPerCell,
+        onProgress: pct => {
+            optFill.style.width = pct + '%';
+            const done = Math.round(totalCells * pct / 100);
+            optLbl.textContent = `${pct}% — ${done} / ${totalCells} cells`;
+        }
+    });
+
+    optProgress.classList.add('hidden');
+    runOptBtn.disabled = false;
+
+    renderOptTables(results, { S17, DAS, RSA, payout });
+});
+
+// Basic strategy action for a given cell (for comparison)
+function basicAction(type, playerValue, dealerValue, pairCard, rules) {
+    // Build a mock player object for StrategyEngine
+    const hand = {
+        cards: type === 'pair'
+            ? [mockCard(pairCard), mockCard(pairCard)]
+            : type === 'soft'
+                ? [mockCard(11), mockCard(playerValue - 11)]
+                : mockHardCards(playerValue),
+        isFinished: false,
+        isSplitAces: false,
+    };
+    const mockPlayer = {
+        hands: [hand],
+        getHandValue: (i) => {
+            let t = 0, a = 0;
+            for (const c of hand.cards) { t += c.getValue(); if (c.rank === 'Ace') a++; }
+            while (t > 21 && a > 0) { t -= 10; a--; }
+            return t;
+        },
+        isSoftHand: (i) => {
+            let t = 0, a = 0;
+            for (const c of hand.cards) { t += c.getValue(); if (c.rank === 'Ace') a++; }
+            while (t > 21 && a > 0) { t -= 10; a--; }
+            return a > 0;
+        },
+        canDouble: (i, r) => hand.cards.length === 2,
+        canSplit:  (i, r) => type === 'pair' && hand.cards.length === 2 && hand.cards[0].rank === hand.cards[1].rank,
+    };
+    const mockDealer = { getValue: () => dealerValue, rank: dealerValue === 11 ? 'Ace' : String(Math.min(dealerValue, 10)) };
+    try {
+        return StrategyEngine.getDecision(mockPlayer, 0, mockDealer, rules);
+    } catch(e) {
+        return '?';
+    }
+}
+
+function mockCard(value) {
+    return {
+        rank: value === 11 ? 'Ace' : value === 10 ? 'King' : String(value),
+        suit: 'Spades',
+        getValue() { return this.rank === 'Ace' ? 11 : this.rank === 'King' ? 10 : Number(this.rank); }
+    };
+}
+
+function mockHardCards(total) {
+    const a = Math.min(10, Math.floor(total / 2));
+    const b = total - a;
+    return [mockCard(Math.max(2, a)), mockCard(Math.max(2, b))];
+}
+
+function renderOptTables(results, rules) {
+    const mockRules = {
+        dealerHitsSoft17: rules.S17,
+        doubleAfterSplit: rules.DAS,
+        resplitAces:      rules.RSA,
+        blackjackPayout:  rules.payout,
+    };
+
+    const dealerLabels = ['2','3','4','5','6','7','8','9','10','A'];
+    let html = '';
+
+    // Helper: render one strategy table
+    function tableHTML(title, rows, getCellData) {
+        let t = `<div class="opt-section"><div class="opt-section-title">${title}</div>`;
+        t += `<table class="opt-table"><thead><tr><th>Player</th>`;
+        for (const dl of dealerLabels) t += `<th>${dl}</th>`;
+        t += `</tr></thead><tbody>`;
+
+        for (const row of rows) {
+            t += `<tr><td class="opt-row-label">${row.label}</td>`;
+            for (const dv of DEALER_VALUES) {
+                const d = getCellData(row, dv);
+                if (!d) { t += `<td>—</td>`; continue; }
+
+                const same = d.sim === d.basic;
+                const evDiff = d.bestEV !== undefined && d.secondEV !== undefined
+                    ? (d.bestEV - d.secondEV).toFixed(3)
+                    : null;
+
+                t += `<td class="opt-cell ${same ? 'cell-same' : 'cell-diff'}" title="Sim: ${d.sim} | Basic: ${d.basic} | EV edge: ${evDiff ?? '?'}">`;
+                t += `<span class="cell-action">${d.sim}</span>`;
+                if (!same) t += `<span class="cell-basic">${d.basic}</span>`;
+                if (evDiff) t += `<span class="cell-ev">${evDiff > 0 ? '+' : ''}${evDiff}</span>`;
+                t += `</td>`;
+            }
+            t += `</tr>`;
+        }
+        t += `</tbody></table></div>`;
+        return t;
+    }
+
+    // Hard totals
+    const hardRows = HARD_TOTALS.slice().reverse().map(tot => ({ label: String(tot), total: tot }));
+    html += tableHTML('Hard totals', hardRows, (row, dv) => {
+        const key  = `${row.total}_${dv}`;
+        const data = results.hard[key];
+        if (!data) return null;
+        const basic = basicAction('hard', row.total, dv, null, mockRules);
+        const evs   = Object.entries(data).filter(([k]) => ['H','S','D'].includes(k)).sort((a,b) => b[1]-a[1]);
+        return { sim: data.best, basic, bestEV: data.bestEV, secondEV: evs[1]?.[1] };
+    });
+
+    // Soft totals
+    const softRows = SOFT_OTHERS.slice().reverse().map(o => ({ label: `A+${o}`, other: o, total: o + 11 }));
+    html += tableHTML('Soft totals', softRows, (row, dv) => {
+        const key  = `${row.total}_${dv}`;
+        const data = results.soft[key];
+        if (!data) return null;
+        const basic = basicAction('soft', row.total, dv, null, mockRules);
+        const evs   = Object.entries(data).filter(([k]) => ['H','S','D'].includes(k)).sort((a,b) => b[1]-a[1]);
+        return { sim: data.best, basic, bestEV: data.bestEV, secondEV: evs[1]?.[1] };
+    });
+
+    // Pairs
+    const pairRows = PAIR_VALUES.slice().reverse().map(pv => ({
+        label: pv === 11 ? 'A,A' : `${pv},${pv}`,
+        pairCard: pv,
+    }));
+    html += tableHTML('Pairs', pairRows, (row, dv) => {
+        const key  = `${row.pairCard}_${dv}`;
+        const data = results.pair[key];
+        if (!data) return null;
+        const basic = basicAction('pair', row.pairCard * 2, dv, row.pairCard, mockRules);
+        const evs   = Object.entries(data).filter(([k]) => ['H','S','D','P'].includes(k)).sort((a,b) => b[1]-a[1]);
+        return { sim: data.best, basic, bestEV: data.bestEV, secondEV: evs[1]?.[1] };
+    });
+
+    optTableWrap.innerHTML = html;
+    optInner.classList.remove('hidden');
+    optLegend.classList.remove('hidden');
+    optPlaceholder.classList.add('hidden');
+}
