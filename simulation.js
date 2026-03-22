@@ -214,9 +214,9 @@ function renderResults(s) {
     }
     html += `</tbody></table>`;
 
-    // Copy-paste export button
-    html += `<div style="margin-top:16px;text-align:right">
-        <button class="copy-btn" onclick="copySimResults()">Copy results for Claude</button>
+
+    html += `<div style="margin-top:14px;text-align:right">
+        <button id="copySimBtn" class="copy-btn" onclick="copySimResults()">Copy results for Claude</button>
     </div>`;
 
     inner.innerHTML = html;
@@ -237,19 +237,65 @@ function winRateColor(pct) {
 function copySimResults() {
     const s = window._lastSimStats;
     if (!s) return;
-    let text = `Simulation Results\n`;
-    text += `EV: ${(s.ev*100).toFixed(3)}% | Win: ${(s.winRate*100).toFixed(2)}% | Loss: ${(s.lossRate*100).toFixed(2)}% | Push: ${(s.pushRate*100).toFixed(2)}%\n`;
-    text += `Hands: ${s.handsPlayed.toLocaleString()} | Player bust: ${(s.playerBustRate*100).toFixed(1)}% | Dealer bust: ${(s.dealerBustRate*100).toFixed(1)}%\n\n`;
-    text += `Starting hand breakdown:\n`;
-    text += `${'Hand'.padEnd(12)}${'Hands'.padStart(8)}${'Win%'.padStart(7)}${'Loss%'.padStart(7)}${'Push%'.padStart(7)}${'Bust%'.padStart(7)}\n`;
+    const lines = [];
+    lines.push('=== SIMULATION RESULTS ===');
+    lines.push(`EV: ${(s.ev*100).toFixed(3)}% | Win: ${(s.winRate*100).toFixed(2)}% | Loss: ${(s.lossRate*100).toFixed(2)}% | Push: ${(s.pushRate*100).toFixed(2)}%`);
+    lines.push(`Hands: ${s.handsPlayed.toLocaleString()} | Player bust: ${(s.playerBustRate*100).toFixed(1)}% | Dealer bust: ${(s.dealerBustRate*100).toFixed(1)}%`);
+    lines.push('');
+    lines.push('Starting hand breakdown:');
+    lines.push('Hand          Hands    Win%   Loss%  Push%  Bust%');
     for (const r of s.handBreakdown) {
-        text += `${r.label.padEnd(12)}${String(r.hands).padStart(8)}${r.winPct.toFixed(1).padStart(7)}${r.lossPct.toFixed(1).padStart(7)}${r.pushPct.toFixed(1).padStart(7)}${r.bustPct.toFixed(1).padStart(7)}\n`;
+        lines.push(
+            r.label.padEnd(14) +
+            String(r.hands).padStart(7) +
+            r.winPct.toFixed(1).padStart(7) +
+            r.lossPct.toFixed(1).padStart(7) +
+            r.pushPct.toFixed(1).padStart(7) +
+            r.bustPct.toFixed(1).padStart(7)
+        );
     }
-    navigator.clipboard.writeText(text).then(() => {
-        const btn = document.querySelector('.copy-btn');
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy results for Claude', 2000);
-    });
+    showCopyTextarea(lines.join('\n'), 'copySimBtn');
+}
+
+// Shared helper — shows a pre-selected textarea for reliable copy-paste
+function showCopyTextarea(text, anchorId) {
+    // Remove any existing textarea
+    const existing = document.getElementById('_copyTA');
+    if (existing) existing.remove();
+
+    const wrap = document.createElement('div');
+    wrap.id = '_copyTA';
+    wrap.style.cssText = 'margin-top:12px;padding:12px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,215,0,0.3);border-radius:8px;';
+
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:11px;color:rgba(255,215,0,0.7);margin-bottom:6px;letter-spacing:1px;';
+    hint.textContent = 'Select All (Ctrl+A) then Copy (Ctrl+C):';
+
+    const ta = document.createElement('textarea');
+    ta.readOnly = true;
+    ta.value = text;
+    ta.style.cssText = 'width:100%;height:200px;background:rgba(0,0,0,0.6);color:rgba(255,255,220,0.9);border:1px solid rgba(255,255,255,0.15);border-radius:5px;font-size:11px;font-family:monospace;padding:8px;resize:vertical;line-height:1.5;display:block;';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.style.cssText = 'margin-top:6px;font-size:11px;padding:3px 12px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.7);border-radius:4px;cursor:pointer;';
+    closeBtn.onclick = () => wrap.remove();
+
+    wrap.appendChild(hint);
+    wrap.appendChild(ta);
+    wrap.appendChild(closeBtn);
+
+    // Insert after the anchor button's parent
+    const anchor = document.getElementById(anchorId);
+    if (anchor && anchor.parentNode) {
+        anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
+    } else {
+        document.getElementById('simResults')?.appendChild(wrap) ||
+        document.getElementById('optResults')?.appendChild(wrap);
+    }
+
+    // Auto-select
+    setTimeout(() => { ta.focus(); ta.select(); }, 30);
 }
 
 function pct(val) {
@@ -462,9 +508,6 @@ function renderOptTables(results, rules) {
         return { sim: data.best, basic, bestEV: data.bestEV, secondEV: data.secondEV };
     });
 
-    html += `<div style="margin-top:16px;text-align:right">
-        <button class="copy-btn" onclick="copyOptResults()">Copy optimizer table for Claude</button>
-    </div>`;
 
     optTableWrap.innerHTML = html;
     optInner.classList.remove('hidden');
@@ -477,40 +520,44 @@ function renderOptTables(results, rules) {
 
 function copyOptResults() {
     const results = window._lastOptResults;
+    const rules   = window._lastOptRules;
     if (!results) return;
+
     const dLabels = ['2','3','4','5','6','7','8','9','10','A'];
     const dvs     = DEALER_VALUES;
-    let text = '';
+    const lines   = [];
 
-    function section(title, rows, getKey, getType) {
-        text += title + '\n';
-        text += 'Player\t' + dLabels.join('\t') + '\n';
+    lines.push('=== STRATEGY OPTIMIZER RESULTS ===');
+    if (rules) lines.push(`Rules: ${rules.S17 ? 'H17' : 'S17'} | DAS:${rules.DAS} | RSA:${rules.RSA} | Payout:${rules.payout}`);
+    lines.push('Format per cell: ACTION  EV  (edge over 2nd best)');
+    lines.push('');
+
+    function section(title, rows, getKey, type) {
+        lines.push(title);
+        lines.push('Player  ' + dLabels.join('       '));
         for (const row of rows) {
-            text += row.label + '\t';
-            text += dvs.map(dv => {
-                const key  = getKey(row, dv);
-                const data = results[getType(row)][key];
-                if (!data) return '--';
-                const ev = (data.bestEV >= 0 ? '+' : '') + data.bestEV.toFixed(2);
-                return data.best + ev;
-            }).join('\t');
-            text += '\n';
+            const cells = dvs.map(dv => {
+                const data = results[type][getKey(row, dv)];
+                if (!data) return '?      ';
+                const ev   = (data.bestEV   >= 0 ? '+' : '') + data.bestEV.toFixed(2);
+                const edge = (data.bestEV - data.secondEV);
+                const edgeStr = (edge >= 0 ? '+' : '') + edge.toFixed(2);
+                return `${data.best}${ev}(${edgeStr})`;
+            });
+            lines.push(row.label.padEnd(7) + cells.join(' '));
         }
-        text += '\n';
+        lines.push('');
     }
 
-    const hardRows = HARD_TOTALS.slice().reverse().map(t => ({ label: String(t), total: t }));
-    const softRows = SOFT_OTHERS.slice().reverse().map(o => ({ label: 'A+' + o, other: o, total: o + 11 }));
-    const pairRows = PAIR_VALUES.slice().reverse().map(pv => ({ label: pv === 11 ? 'A,A' : pv+','+pv, pairCard: pv }));
+    section('Hard totals',
+        HARD_TOTALS.slice().reverse().map(t => ({ label: String(t), total: t })),
+        (r,dv) => r.total+'_'+dv, 'hard');
+    section('Soft totals',
+        SOFT_OTHERS.slice().reverse().map(o => ({ label: 'A+'+o, total: o+11 })),
+        (r,dv) => r.total+'_'+dv, 'soft');
+    section('Pairs',
+        PAIR_VALUES.slice().reverse().map(pv => ({ label: pv===11?'A,A':pv+','+pv, pairCard: pv })),
+        (r,dv) => r.pairCard+'_'+dv, 'pair');
 
-    section('Hard totals', hardRows, (r,dv) => r.total+'_'+dv, () => 'hard');
-    section('Soft totals', softRows, (r,dv) => r.total+'_'+dv, () => 'soft');
-    section('Pairs',       pairRows, (r,dv) => r.pairCard+'_'+dv, () => 'pair');
-
-    navigator.clipboard.writeText(text).then(() => {
-        const btn = document.querySelector('#optTableWrap ~ div .copy-btn') || document.querySelector('.copy-btn');
-        const orig = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = orig, 2000);
-    });
+    showCopyTextarea(lines.join('\n'), 'copyOptBtn');
 }
