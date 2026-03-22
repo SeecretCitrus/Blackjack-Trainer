@@ -694,10 +694,11 @@ a.btn-link:hover { background: rgba(255,255,255,0.15); }
     padding: 1px 3px;
     font-size: 9px;
     text-align: center;
+    appearance: textfield;
     -moz-appearance: textfield;
 }
 .seat-ctrl-input::-webkit-outer-spin-button,
-.seat-ctrl-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.seat-ctrl-input::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; }
 .seat-ctrl-input:focus { outline: none; border-color: rgba(255,215,0,0.6); }
 .seat-ctrl-input:disabled { opacity: 0.45; cursor: not-allowed; }
 
