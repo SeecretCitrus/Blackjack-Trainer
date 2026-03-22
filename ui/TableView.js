@@ -1,9 +1,5 @@
 import { renderCard } from './CardRenderer.js';
 
-// ======================================================
-// All 7 arc positions, left to right.
-// Players are always centered — we pick a symmetric subset.
-// ======================================================
 const ALL_POSITIONS = [
     { left:  7, top: 78 },
     { left: 20, top: 86 },
@@ -26,7 +22,6 @@ const SEAT_LAYOUTS = {
 
 const MAX_SEATS = 7;
 
-// botSeats is an optional array: botSeats[playerIndex] = true|false
 function renderGame(game, botSeats = []) {
     const tableEl = document.getElementById('bj-table');
     if (!tableEl) return;
@@ -50,7 +45,6 @@ function renderGame(game, botSeats = []) {
     const layout = SEAT_LAYOUTS[Math.min(numPlayers, MAX_SEATS)];
 
     layout.forEach((posIndex, layoutSlot) => {
-        // Reverse: leftmost visual slot = highest player index
         const playerIndex = numPlayers - 1 - layoutSlot;
         const player = game.players[playerIndex] ?? null;
         const isBot  = botSeats[playerIndex] === true;
@@ -131,10 +125,22 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
         return seat;
     }
 
+    // Sitting out state
+    if (player.sittingOut) {
+        panel.className = 'seat-panel sitting-out';
+        panel.innerHTML = `
+            <div class="seat-label">${player.name}</div>
+            <div class="sitout-badge">Sitting Out</div>
+            <div class="seat-balance">$${Math.round(player.balance)}</div>
+        `;
+        seat.appendChild(panel);
+        return seat;
+    }
+
     const isCurrentPlayer = player === game.currentPlayer;
     panel.className = 'seat-panel' + (isCurrentPlayer ? ' active' : '');
 
-    // Label row
+    // Label
     const labelEl = document.createElement('div');
     if (isBot) {
         labelEl.className = 'seat-label is-bot';
@@ -145,7 +151,6 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
     }
     panel.appendChild(labelEl);
 
-    // Bot badge
     if (isBot) {
         const badge = document.createElement('div');
         badge.className = 'bot-badge';
@@ -153,10 +158,14 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
         panel.appendChild(badge);
     }
 
-    // Betting ring
-    const ring = document.createElement('div');
-    ring.className = 'bet-ring';
-    panel.appendChild(ring);
+    // Balance & bet info
+    const infoRow = document.createElement('div');
+    infoRow.className = 'seat-info-row';
+    infoRow.innerHTML = `
+        <span class="seat-balance">$${Math.round(player.balance)}</span>
+        <span class="seat-bet-ring">bet $${player.currentBet}</span>
+    `;
+    panel.appendChild(infoRow);
 
     // Hands
     const handsRow = document.createElement('div');
@@ -164,7 +173,7 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
 
     player.hands.forEach((hand, handIndex) => {
         const isActiveHand = isCurrentPlayer && handIndex === game.currentHandIndex;
-        handsRow.appendChild(buildHand(hand, isActiveHand));
+        handsRow.appendChild(buildHand(hand, isActiveHand, game.phase));
     });
 
     panel.appendChild(handsRow);
@@ -175,13 +184,22 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
 // ======================================================
 // Individual hand block
 // ======================================================
-function buildHand(hand, isActive) {
+function buildHand(hand, isActive, phase) {
     const block = document.createElement('div');
 
     let cls = 'hand';
     if (isActive)             cls += ' activeHand';
     else if (hand.isFinished) cls += ' finishedHand';
     block.className = cls;
+
+    // Result badge (shown after round)
+    if (phase === 'ROUND_OVER' && hand.result) {
+        const badge = document.createElement('div');
+        badge.className = 'result-badge result-' + hand.result;
+        const labels = { win: '✓ Win', loss: '✗ Loss', push: '= Push', blackjack: '★ BJ' };
+        badge.textContent = labels[hand.result] ?? hand.result;
+        block.appendChild(badge);
+    }
 
     const header = document.createElement('div');
     header.className = 'handHeader';
@@ -194,6 +212,14 @@ function buildHand(hand, isActive) {
         cardsDiv.innerHTML += renderCard(card);
     });
     block.appendChild(cardsDiv);
+
+    // Bet amount on hand
+    if (hand.bet > 0) {
+        const betEl = document.createElement('div');
+        betEl.className = 'hand-bet';
+        betEl.textContent = `$${hand.bet}`;
+        block.appendChild(betEl);
+    }
 
     return block;
 }

@@ -1,12 +1,14 @@
 // ======================================================
-// Rules Configuration for the Blackjack game engine
+// Rules Configuration
 // ======================================================
 const defaultRules = {
-    dealerHitsSoft17: false,  // S17 or H17
+    dealerHitsSoft17: false,
     doubleAfterSplit: true,
-    resplitAces: false,
-    lateSurrender: true,
-    blackjackPayout: 1.5
+    resplitAces:      false,
+    lateSurrender:    true,
+    blackjackPayout:  1.5,
+    minBet:           15,
+    startingBalance:  100,
 };
 
 export { defaultRules };

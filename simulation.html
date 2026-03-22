@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blackjack Simulator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="simulation.css">
+</head>
+<body>
+<div id="simWrapper">
+
+    <div id="simHeader">
+        <a href="index.html" id="backBtn">← Back to Trainer</a>
+        <h1>Blackjack Simulator</h1>
+    </div>
+
+    <div id="simLayout">
+
+        <!-- ── CONFIG PANEL ── -->
+        <div id="simConfig">
+            <h2>Configuration</h2>
+
+            <div class="cfg-group">
+                <label>Hands to simulate
+                    <select id="simHands">
+                        <option value="10000">10,000</option>
+                        <option value="100000" selected>100,000</option>
+                        <option value="500000">500,000</option>
+                        <option value="1000000">1,000,000</option>
+                    </select>
+                </label>
+                <label>Players
+                    <select id="simPlayers">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                    </select>
+                </label>
+                <label>Decks
+                    <select id="simDecks">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="6" selected>6</option>
+                        <option value="8">8</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="cfg-group">
+                <label>Dealer Soft 17
+                    <select id="simS17">
+                        <option value="false">Stand (S17)</option>
+                        <option value="true" selected>Hit (H17)</option>
+                    </select>
+                </label>
+                <label>Double After Split
+                    <select id="simDAS">
+                        <option value="true" selected>Allowed</option>
+                        <option value="false">Not allowed</option>
+                    </select>
+                </label>
+                <label>Resplit Aces
+                    <select id="simRSA">
+                        <option value="false" selected>No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </label>
+                <label>Blackjack Payout
+                    <select id="simPayout">
+                        <option value="1.5" selected>3:2</option>
+                        <option value="1.2">6:5</option>
+                        <option value="1">1:1</option>
+                    </select>
+                </label>
+            </div>
+
+            <button id="runSimBtn">▶ Run Simulation</button>
+
+            <div id="simProgress" class="hidden">
+                <div id="simProgressBar"><div id="simProgressFill"></div></div>
+                <div id="simProgressLabel">Running...</div>
+            </div>
+        </div>
+
+        <!-- ── RESULTS PANEL ── -->
+        <div id="simResults">
+            <div id="simPlaceholder">
+                Configure a simulation and click <strong>Run</strong> to see results.
+            </div>
+
+            <div id="simResultsInner" class="hidden">
+
+                <h2>Summary</h2>
+                <div id="summaryGrid"></div>
+
+                <h2>Rates</h2>
+                <table id="ratesTable" class="sim-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+                <h2>Starting Hand Breakdown</h2>
+                <p class="sim-note">Player totals after initial deal, showing outcomes per starting total.</p>
+                <table id="handBreakdownTable" class="sim-table">
+                    <thead>
+                        <tr>
+                            <th>Starting Total</th>
+                            <th>Hands</th>
+                            <th>Win %</th>
+                            <th>Loss %</th>
+                            <th>Push %</th>
+                            <th>Bust %</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="simulation.js" type="module"></script>
+</body>
+</html>

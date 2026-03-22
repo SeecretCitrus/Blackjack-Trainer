@@ -9,168 +9,234 @@ import { defaultRules } from './Rules.js';
 // ======================================================
 class Game {
     constructor(numPlayers, numDecks, mode = "automatic", S17 = false) {
-        this.numDecks = numDecks;
-        this.shoe = new Shoe(numDecks);
+        this.numDecks  = numDecks;
+        this.shoe      = new Shoe(numDecks);
         this.shoe.shuffle();
-        this.players = [];
+        this.players   = [];
         for (let i = 0; i < numPlayers; i++) {
             this.players.push(new Player("Player " + (i + 1)));
-        }   
-        this.dealer = new Dealer();
-        this.mode = mode;
-        this.silent = mode === "automatic"; // If true, suppresses console logs for card dealings and actions
-        this.maxSplits = 3; // Limit to 3 splits (4 hands total)
+        }
+        this.dealer  = new Dealer();
+        this.mode    = mode;
+        this.silent  = mode === "automatic";
+        this.maxSplits = 3;
+
         this.penetrationMax = 75;
         this.penetrationMin = 60;
-        this.penetration = (Math.random() * (this.penetrationMax - this.penetrationMin + 1) + this.penetrationMin) / 100; // Average deck size before reshuffling
+        this.penetration    = (Math.random() * (this.penetrationMax - this.penetrationMin + 1) + this.penetrationMin) / 100;
         this.startingDeckSize = numDecks * 52;
 
-        this.currentHandIndex = 0;
+        this.currentHandIndex   = 0;
         this.currentPlayerIndex = 0;
+        this.currentPlayer      = null;
 
         this.phase = "BETTING";
 
-        this.rules = { ...defaultRules, dealerHitsSoft17: S17 };
+        this.rules = {
+            ...defaultRules,
+            dealerHitsSoft17: S17,
+            minBet: 15,
+        };
 
         this.stats = {
             roundsPlayed: 0,
-            handsPlayed: 0,
-            wins: 0,
-            losses: 0,
-            pushes: 0
+            handsPlayed:  0,
+            wins:         0,
+            losses:       0,
+            pushes:       0,
         };
     }
 
+    // ======================================================
+    // Full automatic round (simulation mode)
+    // ======================================================
     playFullRound(strategyEngine = null) {
         this.startRound();
-        //play all player hands
         while (this.phase === "PLAYER_TURN") {
-            let player = this.currentPlayer;
-            let action;
-            if (strategyEngine) {
-                action = strategyEngine.getDecision(player, this.currentHandIndex, this.dealer.getUpCard(), this.rules);
-            } else {
-                throw new Error("No strategy engine provided for autoplay");
-            }
+            const action = strategyEngine
+                ? strategyEngine.getDecision(this.currentPlayer, this.currentHandIndex, this.dealer.getUpCard(), this.rules)
+                : (() => { throw new Error("No strategy engine provided"); })();
             this.handlePlayerAction(action);
         }
-        //dealer plays and round finishes automatically after last player hand is done
         this.stats.roundsPlayed++;
         return this.buildRoundResult();
     }
 
     buildRoundResult() {
         return {
-            dealerTotal: this.dealer.getHandValue(),
+            dealerTotal:  this.dealer.getHandValue(),
             playerTotals: this.players.map(p => p.hands.map((_, i) => p.getHandValue(i))),
         };
     }
 
+    // Active (non-sitting-out) players
+    activePlayers() {
+        return this.players.filter(p => !p.sittingOut);
+    }
+
+    // ======================================================
+    // Initial deal
+    // ======================================================
     initialDeal() {
         for (let round = 0; round < 2; round++) {
-            for (let player of this.players) {
-                let card = this.shoe.deal();
-                player.getCard(card);
+            for (const player of this.activePlayers()) {
+                player.getCard(this.shoe.deal());
             }
-            // Dealer gets a card but only shows the first one
-            let dealerCard = this.shoe.deal();
+            const dealerCard = this.shoe.deal();
             this.dealer.getCard(dealerCard);
-            if (!this.silent) {
-                console.log("Dealer was dealt: " + dealerCard.rank + " of " + dealerCard.suit);
-            }
+            if (!this.silent) console.log("Dealer dealt: " + dealerCard.rank + " of " + dealerCard.suit);
         }
     }
 
+    // ======================================================
+    // Naturals check
+    // ======================================================
     checkNaturals() {
-        const dealerBlackjack =
-            this.dealer.hands[0].cards.length === 2 &&
-            this.dealer.getHandValue() === 21;
+        const dealerBJ = this.dealer.hands[0].cards.length === 2 && this.dealer.getHandValue() === 21;
 
-        for (let player of this.players) {
-            const playerHand = player.hands[0];
-            const playerBlackjack =
-                playerHand.cards.length === 2 &&
-                player.getHandValue(0) === 21;
+        for (const player of this.activePlayers()) {
+            const hand     = player.hands[0];
+            const playerBJ = hand.cards.length === 2 && player.getHandValue(0) === 21;
 
-            if (dealerBlackjack && playerBlackjack && !this.silent) {
-                console.log("Push: both have blackjack");
-                playerHand.isFinished = true;
+            if (dealerBJ && playerBJ) {
+                if (!this.silent) console.log("Push: both have blackjack");
+                hand.isFinished = true;
+                hand.result     = "push";
                 this.stats.pushes++;
                 this.stats.handsPlayed++;
-            } else if (playerBlackjack && !this.silent) {
-                console.log(player.name + " has blackjack!");
-                playerHand.isFinished = true;
+            } else if (playerBJ) {
+                if (!this.silent) console.log(player.name + " has blackjack!");
+                hand.isFinished = true;
+                hand.result     = "blackjack";
                 this.stats.wins++;
                 this.stats.handsPlayed++;
-            } else if (dealerBlackjack && !this.silent) {
-                console.log("Dealer has blackjack.");
-                playerHand.isFinished = true;
+            } else if (dealerBJ) {
+                if (!this.silent) console.log("Dealer has blackjack.");
+                hand.isFinished = true;
+                hand.result     = "loss";
                 this.stats.losses++;
                 this.stats.handsPlayed++;
             }
         }
 
-        if (dealerBlackjack) {
-            this.phase = "ROUND_OVER";
-        }
+        if (dealerBJ) this.phase = "ROUND_OVER";
     }
 
+    // ======================================================
+    // Reset hands between rounds
+    // ======================================================
     resetHands() {
-        for (let player of this.players) {
+        for (const player of this.players) {
             player.resetHands();
         }
         this.dealer.resetHands();
     }
 
-    /*checkPlays() {
-    }*/
-
+    // ======================================================
+    // Start a round
+    // ======================================================
     startRound() {
-        this.phase = "BETTING";
-        this.currentHandIndex = 0;
+        this.phase              = "BETTING";
+        this.currentHandIndex   = 0;
         this.currentPlayerIndex = 0;
-        this.currentPlayer = this.players[0];
 
         this.checkShuffle();
         this.resetHands();
-        for (let player of this.players) {
-            player.currentBet = 10; // temporary fixed bet
-            player.hands[0].bet = player.currentBet;
+
+        // Place bets and check sit-out
+        for (const player of this.players) {
+            if (player.balance < this.rules.minBet) {
+                player.sittingOut = true;
+            } else {
+                player.sittingOut = false;
+                // In automatic mode use fixed $10 bet for simulation purity
+                const betAmount = this.mode === "automatic" ? 10 : player.currentBet;
+                player.placeBet(betAmount, this.rules.minBet);
+            }
         }
-        this.initialDeal();
-            // Check for dealer blackjack immediately after the initial deal
-        this.checkNaturals();
-        if (this.phase === "ROUND_OVER") {
-            this.checkWinner();   // settle the round
+
+        const active = this.activePlayers();
+        if (active.length === 0) {
+            this.phase = "ROUND_OVER";
             return;
         }
+
+        this.initialDeal();
+        this.checkNaturals();
+
+        if (this.phase === "ROUND_OVER") {
+            this.settleAllBets();
+            return;
+        }
+
+        // Find first active player
+        this.currentPlayerIndex = 0;
+        while (
+            this.currentPlayerIndex < this.players.length &&
+            this.players[this.currentPlayerIndex].sittingOut
+        ) {
+            this.currentPlayerIndex++;
+        }
+
+        if (this.currentPlayerIndex >= this.players.length) {
+            this.currentPlayer = null;
+            this.phase = "ROUND_OVER";
+            return;
+        }
+
+        this.currentPlayer = this.players[this.currentPlayerIndex];
         this.phase = "PLAYER_TURN";
     }
 
+    // ======================================================
+    // Advance to next hand / player
+    // ======================================================
     nextTurn() {
-        let player = this.currentPlayer;
-        //move to next hand first
+        const player = this.currentPlayer;
+
         if (this.currentHandIndex < player.hands.length - 1) {
             this.currentHandIndex++;
+            const nextHand = player.hands[this.currentHandIndex];
+            if (nextHand.cards.length === 1) {
+                const newCard = this.shoe.deal();
+                nextHand.addCard(newCard);
+                if (!this.silent) console.log(player.name + " hand " + (this.currentHandIndex + 1) + " receives: " + newCard.rank);
+                if (nextHand.isSplitAces) {
+                    nextHand.isFinished = true;
+                    this.nextTurn();
+                }
+            }
             return;
         }
-        //reset hand index and move to next player
+
+        // Advance to next active player
         this.currentHandIndex = 0;
         this.currentPlayerIndex++;
+        while (
+            this.currentPlayerIndex < this.players.length &&
+            this.players[this.currentPlayerIndex].sittingOut
+        ) {
+            this.currentPlayerIndex++;
+        }
+
         if (this.currentPlayerIndex < this.players.length) {
             this.currentPlayer = this.players[this.currentPlayerIndex];
         } else {
             this.currentPlayer = null;
             this.finishDealerTurn();
             this.checkWinner();
+            this.settleAllBets();
             this.phase = "ROUND_OVER";
         }
     }
 
+    // ======================================================
+    // Handle a player action
+    // ======================================================
     handlePlayerAction(action) {
         if (this.phase !== "PLAYER_TURN") return;
 
-        const player = this.currentPlayer;
+        const player    = this.currentPlayer;
         const handIndex = this.currentHandIndex;
 
         if (action === "H") {
@@ -187,6 +253,8 @@ class Game {
 
         if (action === "D") {
             if (player.canDouble(handIndex, this.rules)) {
+                const extraBet = player.hands[handIndex].bet;
+                player.balance -= extraBet;
                 player.hands[handIndex].bet *= 2;
                 player.hands[handIndex].isDoubled = true;
                 this.hit(player, handIndex);
@@ -197,48 +265,51 @@ class Game {
         if (action === "P") {
             if (player.canSplit(handIndex, this.rules)) {
                 this.split(handIndex);
-                return; // stay on same player
+                return;
             }
         }
 
         this.nextTurn();
     }
 
+    // ======================================================
+    // Dealer plays out
+    // ======================================================
     finishDealerTurn() {
-        let dealer = this.dealer;
-        while (dealer.shouldHit(this.rules.dealerHitsSoft17)) {
-            if (!this.silent) {
-                console.log("Dealer's hand value: " + dealer.getHandValue() + ". Dealer hits.");
-            }
-            this.hit(dealer);
+        while (this.dealer.shouldHit(this.rules.dealerHitsSoft17)) {
+            if (!this.silent) console.log("Dealer hits. Value: " + this.dealer.getHandValue());
+            this.hit(this.dealer);
         }
     }
 
+    // ======================================================
+    // Determine winners and record stats
+    // ======================================================
     checkWinner() {
-        let dealer = this.dealer;
-        let dealerValue = dealer.getHandValue();
-        if (!this.silent) {
-            console.log("Dealer's hand value: " + dealerValue);
-        }
+        const dealerValue = this.dealer.getHandValue();
+        if (!this.silent) console.log("Dealer final: " + dealerValue);
 
-        for (let player of this.players) {
+        for (const player of this.activePlayers()) {
             for (let h = 0; h < player.hands.length; h++) {
-                let value = player.getHandValue(h);
+                const hand  = player.hands[h];
+                const value = player.getHandValue(h);
+
+                if (hand.result) {
+                    // Already resolved (naturals)
+                    this.stats.handsPlayed++;
+                    continue;
+                }
 
                 if (value > 21) {
-                    this.stats.losses++;
-                }
-                else if (dealerValue > 21) {
-                    this.stats.wins++;
-                }
-                else if (value > dealerValue) {
-                    this.stats.wins++;
-                }
-                else if (value < dealerValue) {
-                    this.stats.losses++;
-                }
-                else {
-                    this.stats.pushes++;
+                    hand.result = "loss";   this.stats.losses++;
+                } else if (dealerValue > 21) {
+                    hand.result = "win";    this.stats.wins++;
+                } else if (value > dealerValue) {
+                    hand.result = "win";    this.stats.wins++;
+                } else if (value < dealerValue) {
+                    hand.result = "loss";   this.stats.losses++;
+                } else {
+                    hand.result = "push";   this.stats.pushes++;
                 }
 
                 this.stats.handsPlayed++;
@@ -246,54 +317,71 @@ class Game {
         }
     }
 
-    hit(player, handIndex = 0) {
-        let newCard = this.shoe.deal();
-        player.getCard(newCard, handIndex);
-        if (!this.silent) {
-            console.log(player.name + " hits and gets: " + newCard.rank + " of " + newCard.suit);
-        }
-        if (player.getHandValue(handIndex) > 21 && !this.silent) {
-            console.log(player.name + " busts with a hand value of " + player.getHandValue(handIndex));
-        }
-        if (player.hands[handIndex].isSplitAces && !this.rules.resplitAces) {
-            player.hands[handIndex].isFinished = true; // Automatically finish the hand if it was split aces
+    // ======================================================
+    // Settle bets after round
+    // ======================================================
+    settleAllBets() {
+        for (const player of this.activePlayers()) {
+            for (let h = 0; h < player.hands.length; h++) {
+                const result = player.hands[h].result;
+                if (result) player.settleBet(h, result, this.rules.blackjackPayout);
+            }
         }
     }
 
+    // ======================================================
+    // Hit
+    // ======================================================
+    hit(player, handIndex = 0) {
+        const newCard = this.shoe.deal();
+        player.getCard(newCard, handIndex);
+        if (!this.silent) console.log(player.name + " hits: " + newCard.rank + " of " + newCard.suit);
+        if (player.getHandValue(handIndex) > 21 && !this.silent) {
+            console.log(player.name + " busts with " + player.getHandValue(handIndex));
+        }
+        if (player.hands[handIndex].isSplitAces && !this.rules.resplitAces) {
+            player.hands[handIndex].isFinished = true;
+        }
+    }
+
+    // ======================================================
+    // Split
+    // ======================================================
     split(handIndex) {
         const player = this.currentPlayer;
-        if (player.hands.length >= this.maxSplits + 1) {
-            if (!this.silent) {
-                console.log(player.name + " cannot split further.");
-            }
-            return;
-        }
-        const handToSplit = player.hands[handIndex];
-        const cardToMove = handToSplit.cards.pop();
+        if (player.hands.length >= this.maxSplits + 1) return;
 
-        const newHand = new Hand(handToSplit.bet);
+        const handToSplit = player.hands[handIndex];
+        const cardToMove  = handToSplit.cards.pop();
+        const newHand     = new Hand(handToSplit.bet);
         newHand.addCard(cardToMove);
+
+        // Deduct extra stake for split hand
+        player.balance -= newHand.bet;
 
         const isAceSplit = cardToMove.rank === "Ace";
         handToSplit.addCard(this.shoe.deal());
-        newHand.addCard(this.shoe.deal());
+
         if (isAceSplit) {
             handToSplit.isSplitAces = true;
-            newHand.isSplitAces = true;
+            newHand.isSplitAces     = true;
+            handToSplit.isFinished  = true;
+        }
 
-            handToSplit.isFinished = true;
-            newHand.isFinished = true;
-        }
         player.hands.splice(handIndex + 1, 0, newHand);
-        if (!this.silent) {
-            console.log(player.name + " splits. First hand: " + player.hands[handIndex].cards[0].rank + " of " + player.hands[handIndex].cards[0].suit + ". New hand: " + newHand.cards[0].rank + " of " + newHand.cards[0].suit);
-        }
+
+        if (!this.silent) console.log(player.name + " splits.");
+
+        if (isAceSplit) this.nextTurn();
     }
 
+    // ======================================================
+    // Shuffle check
+    // ======================================================
     checkShuffle() {
         const remaining = this.shoe.cards.length;
         if (remaining / this.startingDeckSize < (1 - this.penetration)) {
-            console.log("Reshuffling shoe...");
+            if (!this.silent) console.log("Reshuffling shoe...");
             this.shoe = new Shoe(this.numDecks);
             this.shoe.shuffle();
         }

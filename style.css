@@ -490,3 +490,209 @@ button:disabled {
 #botSettings input[type="checkbox"]:checked + span {
     color: rgba(150, 200, 255, 0.95);
 }
+
+/* ======================================================
+   BALANCE / BET DISPLAY IN SEATS
+====================================================== */
+.seat-info-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 8px;
+}
+.seat-balance {
+    color: rgba(255, 215, 0, 0.75);
+    font-size: 8px;
+    white-space: nowrap;
+}
+.seat-bet-ring {
+    color: rgba(255,255,255,0.35);
+    font-size: 7px;
+    white-space: nowrap;
+}
+.hand-bet {
+    font-size: 8px;
+    color: rgba(255,215,0,0.6);
+    text-align: center;
+    margin-top: 1px;
+}
+
+/* ======================================================
+   RESULT BADGES
+====================================================== */
+.result-badge {
+    font-size: 8px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-align: center;
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
+.result-win       { background: rgba(80,180,80,0.25);  color: #7ddd7d; border: 1px solid rgba(80,180,80,0.4); }
+.result-blackjack { background: rgba(255,215,0,0.2);   color: gold;    border: 1px solid rgba(255,215,0,0.4); }
+.result-loss      { background: rgba(200,60,60,0.2);   color: #e08080; border: 1px solid rgba(200,60,60,0.35); }
+.result-push      { background: rgba(150,150,150,0.2); color: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.15); }
+
+/* ======================================================
+   SITTING OUT STATE
+====================================================== */
+.seat-panel.sitting-out {
+    opacity: 0.5;
+    border-color: rgba(255,100,100,0.3);
+}
+.sitout-badge {
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: rgba(255,120,120,0.8);
+    text-transform: uppercase;
+}
+
+/* ======================================================
+   BET PANEL (before round starts)
+====================================================== */
+#betPanel {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 8px auto 0;
+    max-width: 600px;
+}
+.bet-panel-title {
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(255,215,0,0.6);
+    text-transform: uppercase;
+}
+.bet-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    padding: 5px 10px;
+}
+.bet-row-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+}
+.bet-row-balance {
+    font-size: 10px;
+    color: rgba(255,215,0,0.6);
+    white-space: nowrap;
+}
+.bet-input {
+    width: 60px;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 12px;
+    text-align: center;
+}
+.bet-input:focus { outline: none; border-color: rgba(255,215,0,0.5); }
+
+/* ======================================================
+   RESUPPLY PANEL
+====================================================== */
+#resupplyPanel {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 6px auto 0;
+    max-width: 600px;
+}
+.resupply-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(180,40,40,0.15);
+    border: 1px solid rgba(200,60,60,0.3);
+    border-radius: 6px;
+    padding: 5px 10px;
+}
+.resupply-msg {
+    font-size: 11px;
+    color: rgba(255,150,150,0.85);
+    white-space: nowrap;
+}
+.resupply-btn {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,150,150,0.4);
+    background: rgba(200,60,60,0.15);
+    color: rgba(255,180,180,0.9);
+    cursor: pointer;
+}
+.resupply-btn:hover { background: rgba(200,60,60,0.28); }
+
+/* ======================================================
+   BALANCE EDITOR
+====================================================== */
+#balanceEditor {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 6px auto 0;
+    max-width: 600px;
+}
+.balance-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.balance-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    white-space: nowrap;
+}
+.balance-input {
+    width: 72px;
+    background: rgba(0,0,0,0.3);
+    color: rgba(255,215,0,0.85);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    text-align: center;
+}
+.balance-input:focus { outline: none; border-color: rgba(255,215,0,0.5); }
+
+/* ======================================================
+   RULE INPUTS (min bet, starting balance)
+====================================================== */
+.rule-input {
+    width: 70px;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+/* Simulator link styled as a button */
+a.btn-link {
+    display: inline-block;
+    font-size: 13px;
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+a.btn-link:hover { background: rgba(255,255,255,0.15); }

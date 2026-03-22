@@ -13,6 +13,7 @@
 
     <div id="bj-table"></div>
 
+    <!-- Settings row -->
     <div id="gameSettings">
         <label>Decks:
             <select id="numDecksSelect">
@@ -46,26 +47,40 @@
             </select>
         </label>
 
+        <label>Min Bet: $<input type="number" id="minBetInput" class="rule-input" value="15" min="1" step="1"></label>
+        <label>Buy-in: $<input type="number" id="startBalInput" class="rule-input" value="100" min="1" step="10"></label>
+
         <label>
             <input type="checkbox" id="trainerToggle">
             Show Correct Move
         </label>
     </div>
 
-    <!-- Bot toggles — rebuilt dynamically by Controls.js on player count change -->
+    <!-- Bot toggles -->
     <div id="botSettings"></div>
 
+    <!-- Bet inputs (shown before each round) -->
+    <div id="betPanel"></div>
+
+    <!-- Action buttons -->
     <div id="controls">
         <button id="startBtn">Start Game</button>
         <button id="hitBtn">Hit</button>
         <button id="standBtn">Stand</button>
         <button id="doubleBtn">Double</button>
         <button id="splitBtn">Split</button>
-        <button id="simulateBtn">Simulate</button>
+        <a href="simulation.html" id="simulateBtn" class="btn-link">Simulator ↗</a>
         <button id="nextRoundBtn">Next Round</button>
     </div>
 
+    <!-- Strategy explanation -->
     <div id="explanationPanel"></div>
+
+    <!-- Resupply notifications -->
+    <div id="resupplyPanel"></div>
+
+    <!-- Live balance editor -->
+    <div id="balanceEditor"></div>
 
 </div>
 

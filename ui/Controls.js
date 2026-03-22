@@ -1,17 +1,14 @@
 import { StrategyEngine } from '../logic/StrategyEngine.js';
 import { Game } from '../engine/Game.js';
 import { renderGame } from './TableView.js';
-import { Simulator } from '../logic/Simulator.js';
 
 const BOT_DELAY_MS = 500;
 
 let game;
-
-// botSeats[i] = true means player i (0-indexed) is a bot
-let botSeats = [];
+let botSeats = [];   // botSeats[playerIndex] = true|false
 
 // ======================================================
-// Bot seat UI — rebuild checkboxes whenever player count changes
+// Bot seat UI — rebuilt when player count changes
 // ======================================================
 function rebuildBotSettings() {
     const numPlayers = parseInt(document.getElementById("numPlayersSelect").value);
@@ -21,14 +18,23 @@ function rebuildBotSettings() {
     for (let i = 0; i < numPlayers; i++) {
         const label = document.createElement("label");
         const cb    = document.createElement("input");
-        cb.type  = "checkbox";
-        cb.id    = `botP${i}`;
+        cb.type    = "checkbox";
+        cb.id      = `botP${i}`;
         cb.checked = botSeats[i] ?? false;
-        cb.addEventListener("change", () => { botSeats[i] = cb.checked; });
+
+        // Live toggle — takes effect immediately if a game is running
+        cb.addEventListener("change", () => {
+            botSeats[i] = cb.checked;
+            // If it's now this player's turn and they just became a bot, kick off bot play
+            if (game && game.phase === "PLAYER_TURN" &&
+                game.currentPlayerIndex === i && cb.checked) {
+                setTimeout(runBotStep, BOT_DELAY_MS);
+            }
+            refreshUI();
+        });
 
         const span = document.createElement("span");
         span.textContent = `P${i + 1} Bot`;
-
         label.appendChild(cb);
         label.appendChild(span);
         container.appendChild(label);
@@ -36,16 +42,13 @@ function rebuildBotSettings() {
 }
 
 // ======================================================
-// Check whether the current player is a bot
+// Bot execution
 // ======================================================
 function currentPlayerIsBot() {
     if (!game || !game.currentPlayer) return false;
     return botSeats[game.currentPlayerIndex] === true;
 }
 
-// ======================================================
-// Play one bot action, then schedule the next if still a bot
-// ======================================================
 function runBotStep() {
     if (!game || game.phase !== "PLAYER_TURN" || !game.currentPlayer) return;
     if (!currentPlayerIsBot()) return;
@@ -60,23 +63,19 @@ function runBotStep() {
     game.handlePlayerAction(action);
     refreshUI();
 
-    // If there is still a current player and it's still a bot, keep going
     if (game.phase === "PLAYER_TURN" && game.currentPlayer && currentPlayerIsBot()) {
         setTimeout(runBotStep, BOT_DELAY_MS);
     }
 }
 
-// ======================================================
-// After any action, kick off bot play if next player is a bot
-// ======================================================
 function maybeRunBots() {
-    if (game.phase === "PLAYER_TURN" && game.currentPlayer && currentPlayerIsBot()) {
+    if (game && game.phase === "PLAYER_TURN" && game.currentPlayer && currentPlayerIsBot()) {
         setTimeout(runBotStep, BOT_DELAY_MS);
     }
 }
 
 // ======================================================
-// Card size scaling via data-players attribute on #bj-table
+// Card scaling
 // ======================================================
 function applyCardScale(numPlayers) {
     const table = document.getElementById("bj-table");
@@ -84,28 +83,157 @@ function applyCardScale(numPlayers) {
 }
 
 // ======================================================
+// Bet input panel — shown during BETTING / start of each round
+// ======================================================
+function buildBetPanel() {
+    const panel = document.getElementById("betPanel");
+    if (!panel || !game) return;
+    panel.innerHTML = "";
+
+    const active = game.players.filter(p => !p.sittingOut && !botSeats[game.players.indexOf(p)]);
+    if (active.length === 0) return;
+
+    const title = document.createElement("div");
+    title.className = "bet-panel-title";
+    title.textContent = "Place your bets";
+    panel.appendChild(title);
+
+    active.forEach(player => {
+        const row = document.createElement("div");
+        row.className = "bet-row";
+
+        const lbl = document.createElement("span");
+        lbl.textContent = player.name;
+        lbl.className = "bet-row-label";
+
+        const input = document.createElement("input");
+        input.type  = "number";
+        input.className = "bet-input";
+        input.min   = game.rules.minBet;
+        input.max   = player.balance;
+        input.step  = 1;
+        input.value = Math.min(player.currentBet, player.balance);
+        input.addEventListener("input", () => {
+            const val = parseInt(input.value) || game.rules.minBet;
+            player.currentBet = Math.max(val, game.rules.minBet);
+        });
+
+        const balSpan = document.createElement("span");
+        balSpan.className = "bet-row-balance";
+        balSpan.textContent = `$${player.balance}`;
+
+        row.appendChild(lbl);
+        row.appendChild(input);
+        row.appendChild(balSpan);
+        panel.appendChild(row);
+    });
+}
+
+// ======================================================
+// Resupply notification — shown when players sit out
+// ======================================================
+function buildResupplyPanel() {
+    const panel = document.getElementById("resupplyPanel");
+    if (!panel || !game) return;
+    panel.innerHTML = "";
+
+    const broke = game.players.filter(p => p.sittingOut);
+    if (broke.length === 0) return;
+
+    broke.forEach(player => {
+        const row = document.createElement("div");
+        row.className = "resupply-row";
+
+        const msg = document.createElement("span");
+        msg.textContent = `${player.name} is out of funds`;
+        msg.className = "resupply-msg";
+
+        const amtInput = document.createElement("input");
+        amtInput.type  = "number";
+        amtInput.className = "bet-input";
+        amtInput.min   = 1;
+        amtInput.step  = 10;
+        amtInput.value = player.startingBalance;
+        amtInput.style.width = "70px";
+
+        const btn = document.createElement("button");
+        btn.textContent = "Resupply";
+        btn.className   = "resupply-btn";
+        btn.addEventListener("click", () => {
+            const amt = parseInt(amtInput.value) || player.startingBalance;
+            player.resupply(amt);
+            player.currentBet = Math.min(player.currentBet, player.balance);
+            refreshUI();
+            buildResupplyPanel();
+        });
+
+        row.appendChild(msg);
+        row.appendChild(amtInput);
+        row.appendChild(btn);
+        panel.appendChild(row);
+    });
+}
+
+// ======================================================
+// Balance editor — live-editable balance fields per player
+// ======================================================
+function buildBalanceEditor() {
+    const panel = document.getElementById("balanceEditor");
+    if (!panel || !game) return;
+    panel.innerHTML = "";
+
+    game.players.forEach(player => {
+        const row = document.createElement("div");
+        row.className = "balance-row";
+
+        const lbl = document.createElement("span");
+        lbl.className   = "balance-label";
+        lbl.textContent = player.name + ":";
+
+        const input = document.createElement("input");
+        input.type  = "number";
+        input.className = "balance-input";
+        input.min   = 0;
+        input.step  = 10;
+        input.value = Math.round(player.balance);
+        input.title = "Edit balance directly";
+        input.addEventListener("change", () => {
+            const val = parseInt(input.value);
+            if (!isNaN(val) && val >= 0) {
+                player.balance = val;
+                if (val >= game.rules.minBet) player.sittingOut = false;
+                buildResupplyPanel();
+                refreshUI();
+            }
+        });
+
+        row.appendChild(lbl);
+        row.appendChild(input);
+        panel.appendChild(row);
+    });
+}
+
+// ======================================================
 // UI refresh
 // ======================================================
 function updateButtons() {
     const nextRoundBtn = document.getElementById("nextRoundBtn");
-
-    // Disable action buttons when it's a bot's turn or no current player
     const isBot = currentPlayerIsBot();
 
     if (!game || game.currentPlayer === null || isBot) {
-        document.getElementById("hitBtn").disabled = true;
-        document.getElementById("standBtn").disabled = true;
+        document.getElementById("hitBtn").disabled    = true;
+        document.getElementById("standBtn").disabled  = true;
         document.getElementById("doubleBtn").disabled = true;
-        document.getElementById("splitBtn").disabled = true;
+        document.getElementById("splitBtn").disabled  = true;
         nextRoundBtn.disabled = !game || game.phase !== "ROUND_OVER";
         return;
     }
 
-    document.getElementById("hitBtn").disabled = false;
-    document.getElementById("standBtn").disabled = false;
+    document.getElementById("hitBtn").disabled    = false;
+    document.getElementById("standBtn").disabled  = false;
     document.getElementById("doubleBtn").disabled =
         !game.currentPlayer.canDouble(game.currentHandIndex, game.rules);
-    document.getElementById("splitBtn").disabled =
+    document.getElementById("splitBtn").disabled  =
         !game.currentPlayer.canSplit(game.currentHandIndex, game.rules);
     nextRoundBtn.disabled = game.phase !== "ROUND_OVER";
 }
@@ -116,6 +244,8 @@ function refreshUI() {
     updateButtons();
     highlightCorrectAction();
     updateExplanationPanel();
+    buildResupplyPanel();
+    buildBalanceEditor();
 }
 
 function showTooltip(button, message) {
@@ -124,15 +254,15 @@ function showTooltip(button, message) {
     tooltip.className  = "tooltip";
     tooltip.innerText  = message;
     tooltip.style.position = "fixed";
-    tooltip.style.left = rect.left + rect.width / 2 + "px";
-    tooltip.style.top  = rect.top - 30 + "px";
+    tooltip.style.left     = rect.left + rect.width / 2 + "px";
+    tooltip.style.top      = rect.top - 30 + "px";
     document.body.appendChild(tooltip);
     setTimeout(() => tooltip.remove(), 2000);
 }
 
 function handleManualAction(action) {
     if (!game || game.phase !== "PLAYER_TURN") return;
-    if (currentPlayerIsBot()) return; // ignore button clicks during bot turn
+    if (currentPlayerIsBot()) return;
 
     const correct = StrategyEngine.getDecision(
         game.currentPlayer,
@@ -159,35 +289,46 @@ function handleManualAction(action) {
 // Setup
 // ======================================================
 function setupControls() {
-    document.getElementById("hitBtn").disabled = true;
-    document.getElementById("standBtn").disabled = true;
+    document.getElementById("hitBtn").disabled    = true;
+    document.getElementById("standBtn").disabled  = true;
     document.getElementById("doubleBtn").disabled = true;
-    document.getElementById("splitBtn").disabled = true;
+    document.getElementById("splitBtn").disabled  = true;
     document.getElementById("nextRoundBtn").disabled = true;
 
-    // Rebuild bot checkboxes whenever player count changes
+    // Rebuild bot checkboxes on player count change
     document.getElementById("numPlayersSelect").addEventListener("change", () => {
         rebuildBotSettings();
     });
-    rebuildBotSettings(); // build on load
+    rebuildBotSettings();
 
     document.getElementById("startBtn").addEventListener("click", () => {
         const numDecks   = parseInt(document.getElementById("numDecksSelect").value);
         const S17        = document.getElementById("S17Select").value === "true";
         const numPlayers = parseInt(document.getElementById("numPlayersSelect").value);
+        const minBet     = parseInt(document.getElementById("minBetInput")?.value) || 15;
+        const startBal   = parseInt(document.getElementById("startBalInput")?.value) || 100;
 
-        // Sync botSeats array length to numPlayers
+        // Sync bot config
         botSeats = Array.from({ length: numPlayers }, (_, i) => {
             const cb = document.getElementById(`botP${i}`);
             return cb ? cb.checked : false;
         });
 
         game = new Game(numPlayers, numDecks, "manual", S17);
+        game.rules.minBet = minBet;
+
+        // Set starting balances
+        game.players.forEach(p => {
+            p.balance         = startBal;
+            p.startingBalance = startBal;
+            p.currentBet      = minBet;
+        });
+
         applyCardScale(numPlayers);
+        buildBetPanel();
         game.startRound();
         refreshUI();
-        maybeRunBots(); // in case player 1 (rightmost, played last) is human
-                        // but earlier players are bots — start the chain
+        maybeRunBots();
     });
 
     document.getElementById("hitBtn").addEventListener("click",   () => handleManualAction("H"));
@@ -195,12 +336,9 @@ function setupControls() {
     document.getElementById("doubleBtn").addEventListener("click", () => handleManualAction("D"));
     document.getElementById("splitBtn").addEventListener("click",  () => handleManualAction("P"));
 
-    document.getElementById("simulateBtn").addEventListener("click", () => {
-        Simulator.runSimulation();
-    });
-
     document.getElementById("nextRoundBtn").addEventListener("click", () => {
         if (!game || game.phase !== "ROUND_OVER") return;
+        buildBetPanel();
         game.startRound();
         refreshUI();
         maybeRunBots();
@@ -219,7 +357,6 @@ function setupControls() {
 // ======================================================
 function highlightCorrectAction() {
     const buttonMap = { H: "hitBtn", S: "standBtn", D: "doubleBtn", P: "splitBtn" };
-
     for (let key in buttonMap) {
         document.getElementById(buttonMap[key]).classList.remove("correctMove");
     }
@@ -248,7 +385,6 @@ function updateExplanationPanel() {
     if (!panel) return;
 
     const trainer = document.getElementById("trainerToggle").checked;
-
     if (!trainer || !game || game.phase !== "PLAYER_TURN" ||
         !game.currentPlayer || currentPlayerIsBot()) {
         panel.classList.remove("visible");
