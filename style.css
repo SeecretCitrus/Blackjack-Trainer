@@ -289,7 +289,7 @@ h1 {
     overflow: visible;
 }
 
-/* Individual hand block — sizes to its card content */
+/* Individual hand block — let JS set width via inline style */
 .hand {
     display: inline-flex;
     flex-direction: column;
@@ -300,8 +300,6 @@ h1 {
     padding: 4px 8px;
     border: 1px solid transparent;
     overflow: visible;
-    width: max-content;
-    min-width: 0;
 }
 
 .hand.activeHand {
@@ -324,12 +322,11 @@ h1 {
 #bj-table[data-players="3"] .hand .handHeader { font-size: 13px; }
 #bj-table[data-players="4"] .hand .handHeader { font-size: 12px; }
 
-/* Cards row — no fixed width, expands naturally */
+/* Cards row — width set by JS to avoid negative-margin max-content bug */
 .cards {
     display: flex;
     overflow: visible;
-    width: max-content;
-    min-width: 0;
+    position: relative;
 }
 
 .cards .card              { margin-left: -18px; }
@@ -709,3 +706,57 @@ a.btn-link:hover { background: rgba(255,255,255,0.15); }
 #bj-table[data-players="1"] .seat-ctrl-label { font-size: 11px; }
 #bj-table[data-players="2"] .seat-ctrl-input { width: 50px; font-size: 11px; }
 #bj-table[data-players="2"] .seat-ctrl-label { font-size: 10px; }
+
+/* ======================================================
+   SHOE BAR
+====================================================== */
+.shoe-bar-wrap {
+    position: absolute;
+    bottom: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 55%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    pointer-events: none;
+}
+
+.shoe-bar-label {
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.shoe-bar-track {
+    position: relative;
+    width: 100%;
+    height: 5px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 3px;
+    overflow: visible;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.shoe-bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, rgba(100,200,130,0.7), rgba(60,160,90,0.5));
+    border-radius: 3px 0 0 3px;
+    transition: width 0.3s ease;
+}
+
+/* Penetration marker — vertical line on the track */
+.shoe-bar-marker {
+    position: absolute;
+    top: -3px;
+    width: 2px;
+    height: 11px;
+    background: rgba(255,215,0,0.75);
+    border-radius: 1px;
+    transform: translateX(-50%);
+    pointer-events: auto;
+    cursor: default;
+}

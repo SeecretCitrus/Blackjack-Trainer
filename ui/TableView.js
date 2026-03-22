@@ -1,5 +1,16 @@
 import { renderCard } from './CardRenderer.js';
 
+// Card width per player count (matches CSS scaling)
+const CARD_WIDTHS   = { 1: 90, 2: 76, 3: 68, 4: 62, 5: 54, 6: 54, 7: 54 };
+const CARD_OVERLAPS = { 1: 28, 2: 24, 3: 22, 4: 20, 5: 18, 6: 18, 7: 18 };
+
+function cardsRowWidth(numCards, numPlayers) {
+    const w = CARD_WIDTHS[numPlayers]   ?? 54;
+    const o = CARD_OVERLAPS[numPlayers] ?? 18;
+    if (numCards <= 0) return w;
+    return w + (numCards - 1) * (w - o);
+}
+
 const ALL_POSITIONS = [
     { left:  7, top: 78 },
     { left: 20, top: 86 },
@@ -46,6 +57,7 @@ function renderGame(game, botSeats = []) {
     if (!game) return;
 
     tableEl.appendChild(buildDealerZone(game));
+    tableEl.appendChild(buildShoeBar(game));
 
     const numPlayers = game.players.length;
     const layout = SEAT_LAYOUTS[Math.min(numPlayers, MAX_SEATS)];
@@ -180,9 +192,10 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
     const handsRow = document.createElement('div');
     handsRow.className = 'playerHands';
 
+    const numPlayers = game.players.length;
     player.hands.forEach((hand, handIndex) => {
         const isActiveHand = isCurrentPlayer && handIndex === game.currentHandIndex;
-        handsRow.appendChild(buildHand(hand, isActiveHand, game.phase));
+        handsRow.appendChild(buildHand(hand, isActiveHand, game.phase, numPlayers));
     });
 
     panel.appendChild(handsRow);
@@ -251,7 +264,7 @@ function buildBalanceRow(player, game) {
 // ======================================================
 // Individual hand block
 // ======================================================
-function buildHand(hand, isActive, phase) {
+function buildHand(hand, isActive, phase, numPlayers = 1) {
     const block = document.createElement('div');
 
     let cls = 'hand';
@@ -278,9 +291,15 @@ function buildHand(hand, isActive, phase) {
     hand.cards.forEach(card => {
         cardsDiv.innerHTML += renderCard(card);
     });
+
+    // Set explicit pixel width so overlapping cards don't overflow the container
+    const cw = cardsRowWidth(hand.cards.length, numPlayers);
+    cardsDiv.style.width = cw + 'px';
+    block.style.minWidth = (cw + 16) + 'px'; // 16px = 2 * 8px padding
+
     block.appendChild(cardsDiv);
 
-    // Show hand bet amount (not editable — just informational)
+    // Show hand bet amount
     if (hand.bet > 0) {
         const betEl = document.createElement('div');
         betEl.className = 'hand-bet';
@@ -289,6 +308,46 @@ function buildHand(hand, isActive, phase) {
     }
 
     return block;
+}
+
+// ======================================================
+// Shoe bar — shows remaining cards and penetration marker
+// ======================================================
+function buildShoeBar(game) {
+    const totalCards    = game.startingDeckSize;
+    const remaining     = game.shoe.cards.length;
+    const pct           = remaining / totalCards;           // 0–1 fraction remaining
+    const penetrationPct = 1 - game.penetration;           // fraction where reshuffle triggers
+
+    const wrap = document.createElement('div');
+    wrap.className = 'shoe-bar-wrap';
+
+    // Label
+    const lbl = document.createElement('div');
+    lbl.className = 'shoe-bar-label';
+    lbl.textContent = `Shoe: ${remaining} / ${totalCards}`;
+    wrap.appendChild(lbl);
+
+    // Track
+    const track = document.createElement('div');
+    track.className = 'shoe-bar-track';
+
+    // Fill (remaining cards)
+    const fill = document.createElement('div');
+    fill.className = 'shoe-bar-fill';
+    fill.style.width = (pct * 100) + '%';
+
+    // Penetration marker line
+    const marker = document.createElement('div');
+    marker.className = 'shoe-bar-marker';
+    marker.style.left = (penetrationPct * 100) + '%';
+    marker.title = `Reshuffle at ~${Math.round(penetrationPct * 100)}%`;
+
+    track.appendChild(fill);
+    track.appendChild(marker);
+    wrap.appendChild(track);
+
+    return wrap;
 }
 
 export { renderGame };
