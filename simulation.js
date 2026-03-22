@@ -236,11 +236,14 @@ function renderResults(s) {
 
 
     html += `<div style="margin-top:14px;text-align:right">
-        <button id="copySimBtn" class="copy-btn" onclick="copySimResults()">Copy results for Claude</button>
+        <button id="copySimBtn" class="copy-btn">Copy results for Claude</button>
     </div>`;
 
     inner.innerHTML = html;
     inner.classList.remove("hidden");
+
+    // Wire up copy button via addEventListener (onclick in innerHTML fails in modules)
+    document.getElementById('copySimBtn').addEventListener('click', copySimResults);
 
     // Store stats for copy function
     window._lastSimStats = s;
@@ -631,6 +634,13 @@ function renderOptTables(results, rules) {
     optInner.classList.remove('hidden');
     optLegend.classList.remove('hidden');
     optPlaceholder.classList.add('hidden');
+
+    // Wire up copy button via addEventListener (onclick attr fails in modules)
+    const copyOptBtnEl = document.getElementById('copyOptBtn');
+    if (copyOptBtnEl) {
+        copyOptBtnEl.replaceWith(copyOptBtnEl.cloneNode(true)); // remove old listeners
+        document.getElementById('copyOptBtn').addEventListener('click', copyOptResults);
+    }
 
     window._lastOptResults = results;
     window._lastOptRules   = rules;
