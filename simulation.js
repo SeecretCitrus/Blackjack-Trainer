@@ -1,5 +1,52 @@
 import { Simulator } from './logic/Simulator.js';
 
+// ======================================================
+// Custom strategy decision using optimizer EV results
+// Falls back to basic strategy for any cell not in the optimizer output
+// ======================================================
+function getCustomDecision(player, handIndex, dealerUpCard, rules, optResults) {
+    const hand        = player.hands[handIndex];
+    const playerTotal = player.getHandValue(handIndex);
+    const dealerValue = dealerUpCard.getValue();
+    const isSoft      = player.isSoftHand(handIndex);
+
+    if (hand.isFinished) return 'S';
+
+    // Check pairs first
+    if (player.canSplit(handIndex, rules)) {
+        const pv  = hand.cards[0].getValue();
+        const key = `${pv}_${dealerValue}`;
+        const d   = optResults.pair[key];
+        if (d && d.best === 'P') return 'P';
+    }
+
+    // Soft totals
+    if (isSoft) {
+        const other = playerTotal - 11;
+        const key   = `${playerTotal}_${dealerValue}`;
+        const d     = optResults.soft[key];
+        if (d) {
+            if (d.best === 'D' && player.canDouble(handIndex, rules)) return 'D';
+            if (d.best === 'D') return 'S'; // Ds fallback
+            return d.best;
+        }
+    }
+
+    // Hard totals
+    if (!isSoft) {
+        const key = `${playerTotal}_${dealerValue}`;
+        const d   = optResults.hard[key];
+        if (d) {
+            if (d.best === 'D' && player.canDouble(handIndex, rules)) return 'D';
+            if (d.best === 'D') return 'H'; // can't double, hit instead
+            return d.best;
+        }
+    }
+
+    // Fallback to basic strategy
+    return StrategyEngine.getDecision(player, handIndex, dealerUpCard, rules);
+}
+
 const runBtn       = document.getElementById("runSimBtn");
 const progress     = document.getElementById("simProgress");
 const progressFill = document.getElementById("simProgressFill");
@@ -429,6 +476,9 @@ function pct(val) {
 import { StrategyOptimizer, DEALER_VALUES, HARD_TOTALS, SOFT_OTHERS, PAIR_VALUES } from './logic/StrategyOptimizer.js';
 import { StrategyEngine } from './logic/StrategyEngine.js';
 
+// Track whether an optimized strategy is currently applied
+let _optimizedStrategyActive = false;
+
 // Tab switching
 document.querySelectorAll('.sim-tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -638,12 +688,180 @@ function renderOptTables(results, rules) {
     // Wire up copy button via addEventListener (onclick attr fails in modules)
     const copyOptBtnEl = document.getElementById('copyOptBtn');
     if (copyOptBtnEl) {
-        copyOptBtnEl.replaceWith(copyOptBtnEl.cloneNode(true)); // remove old listeners
+        copyOptBtnEl.replaceWith(copyOptBtnEl.cloneNode(true));
         document.getElementById('copyOptBtn').addEventListener('click', copyOptResults);
+    }
+
+    // Wire up Apply/Clear strategy button
+    const applyBtnEl = document.getElementById('applyStrategyBtn');
+    if (applyBtnEl) {
+        applyBtnEl.replaceWith(applyBtnEl.cloneNode(true));
+        document.getElementById('applyStrategyBtn').addEventListener('click', () => {
+            toggleOptimizedStrategy(results);
+        });
     }
 
     window._lastOptResults = results;
     window._lastOptRules   = rules;
+    updateApplyButton();
+}
+
+// Convert optimizer results object into override table format for StrategyEngine
+function buildOverrideTable(results) {
+    const overrides = { hard: {}, soft: {}, pair: {} };
+    for (const [key, data] of Object.entries(results.hard)) overrides.hard[key] = data.best;
+    for (const [key, data] of Object.entries(results.soft)) overrides.soft[key] = data.best;
+    for (const [key, data] of Object.entries(results.pair)) overrides.pair[key] = data.best;
+    return overrides;
+}
+
+function toggleOptimizedStrategy(results) {
+    if (_optimizedStrategyActive) {
+        StrategyEngine.clearOverrides();
+        _optimizedStrategyActive = false;
+    } else {
+        const overrides = buildOverrideTable(results);
+        StrategyEngine.applyOptimizedStrategy(overrides);
+        _optimizedStrategyActive = true;
+    }
+    updateApplyButton();
+    updateStrategyBanner();
+}
+
+function updateApplyButton() {
+    const btn = document.getElementById('applyStrategyBtn');
+    if (!btn) return;
+    if (_optimizedStrategyActive) {
+        btn.textContent = '✓ Optimized strategy active — Click to revert';
+        btn.style.background = 'rgba(80,200,100,0.15)';
+        btn.style.borderColor = 'rgba(80,200,100,0.5)';
+        btn.style.color = '#6ddb8a';
+    } else {
+        btn.textContent = '▶ Apply as active strategy';
+        btn.style.background = 'rgba(255,215,0,0.12)';
+        btn.style.borderColor = 'rgba(255,215,0,0.4)';
+        btn.style.color = 'gold';
+    }
+}
+
+function updateStrategyBanner() {
+    let banner = document.getElementById('strategyBanner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'strategyBanner';
+        banner.style.cssText = [
+            'position:fixed', 'bottom:16px', 'right:16px',
+            'padding:8px 16px', 'border-radius:6px',
+            'font-size:12px', 'font-weight:bold', 'letter-spacing:0.5px',
+            'z-index:1000', 'transition:opacity 0.3s',
+            'pointer-events:none',
+        ].join(';');
+        document.body.appendChild(banner);
+    }
+    if (_optimizedStrategyActive) {
+        banner.textContent = '⚡ Optimized strategy active';
+        banner.style.background = 'rgba(20,80,40,0.95)';
+        banner.style.border = '1px solid rgba(80,200,100,0.5)';
+        banner.style.color = '#6ddb8a';
+        banner.style.opacity = '1';
+    } else {
+        banner.style.opacity = '0';
+    }
+}
+
+// ======================================================
+// Apply optimizer results as active strategy + run comparison sim
+// ======================================================
+function applyOptStrategy() {
+    const results = window._lastOptResults;
+    const rules   = window._lastOptRules;
+    if (!results) return;
+
+    window._customStrategy = results;
+    window._customRules    = rules;
+
+    const btn = document.getElementById('applyStrategyBtn');
+    if (btn) {
+        btn.textContent = '✓ Applied — Running comparison...';
+        btn.style.borderColor = 'rgba(80,200,100,0.6)';
+        btn.style.color = '#6ddb8a';
+    }
+
+    // Run two simulations: basic strategy vs custom strategy, same rules
+    runStrategyComparison(results, rules);
+}
+
+async function runStrategyComparison(optResults, rules) {
+    const numRounds = 500000;
+    const numDecks  = parseInt(document.getElementById('optDecks').value);
+    const S17       = rules.S17;
+    const DAS       = rules.DAS;
+    const RSA       = rules.RSA;
+    const payout    = rules.payout;
+
+    const compPanel = document.getElementById('comparisonPanel');
+    if (compPanel) {
+        compPanel.innerHTML = `<div style="color:rgba(255,215,0,0.7);font-size:12px;letter-spacing:1px;margin-bottom:8px">RUNNING COMPARISON (500k hands each)...</div>
+            <div class="sim-progress-inline"><div id="compFill" style="height:4px;background:gold;width:0%;border-radius:2px;transition:width 0.1s"></div></div>`;
+        compPanel.classList.remove('hidden');
+    }
+
+    // Basic strategy sim
+    const basicStats = await runInChunks({
+        numRounds, numDecks, S17, DAS, RSA, payout, numPlayers: 1,
+        onProgress: pct => {
+            const fill = document.getElementById('compFill');
+            if (fill) fill.style.width = (pct / 2) + '%';
+        }
+    });
+
+    // Custom strategy sim — uses optimizer-derived decisions
+    const customStats = await runInChunks({
+        numRounds, numDecks, S17, DAS, RSA, payout, numPlayers: 1,
+        customStrategy: optResults,
+        onProgress: pct => {
+            const fill = document.getElementById('compFill');
+            if (fill) fill.style.width = (50 + pct / 2) + '%';
+        }
+    });
+
+    renderComparison(basicStats, customStats, compPanel);
+
+    const btn = document.getElementById('applyStrategyBtn');
+    if (btn) {
+        btn.textContent = '▶ Apply as Strategy & Compare';
+        btn.style.borderColor = 'rgba(255,215,0,0.4)';
+        btn.style.color = 'rgba(255,215,0,0.8)';
+    }
+}
+
+function renderComparison(basic, custom, panel) {
+    if (!panel) return;
+    const basicEV  = (basic.ev  * 100).toFixed(3);
+    const customEV = (custom.ev * 100).toFixed(3);
+    const diff     = ((custom.ev - basic.ev) * 100).toFixed(3);
+    const better   = custom.ev > basic.ev;
+
+    panel.innerHTML = `
+        <div class="opt-section-title" style="margin-bottom:10px">Strategy comparison — 500k hands each</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="sum-card">
+                <div class="sum-label">Basic strategy EV</div>
+                <div class="sum-value ${basic.ev >= 0 ? 'sum-pos' : ''}" style="font-size:20px">${basic.ev >= 0 ? '+' : ''}${basicEV}%</div>
+            </div>
+            <div class="sum-card">
+                <div class="sum-label">Optimized strategy EV</div>
+                <div class="sum-value ${custom.ev >= 0 ? 'sum-pos' : ''}" style="font-size:20px">${custom.ev >= 0 ? '+' : ''}${customEV}%</div>
+            </div>
+            <div class="sum-card ${better ? 'sum-pos' : 'sum-neg'}">
+                <div class="sum-label">EV difference</div>
+                <div class="sum-value" style="font-size:20px;color:${better ? '#6ddb8a' : '#e07070'}">${better ? '+' : ''}${diff}%</div>
+                <div class="sum-sub">${better ? 'optimized is better' : 'basic is better'}</div>
+            </div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);text-align:center">
+            Both simulations use identical rules. EV difference reflects purely the strategy table changes.
+        </div>`;
 }
 
 function copyOptResults() {

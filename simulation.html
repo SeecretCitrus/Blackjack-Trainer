@@ -178,8 +178,12 @@
             </div>
             <div id="optResultsInner" class="hidden">
                 <div id="optTableWrap"></div>
-                <div style="margin-top:16px;text-align:right">
+                <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+                    <button id="applyStrategyBtn" class="copy-btn" style="border-color:rgba(255,215,0,0.4);color:gold;background:rgba(255,215,0,0.12)">▶ Apply as active strategy</button>
                     <button id="copyOptBtn" class="copy-btn">Copy results for Claude</button>
+                </div>
+                <div id="applyNote" style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.4);text-align:right">
+                    Applying replaces basic strategy in the Simulator and Trainer tabs until you revert.
                 </div>
             </div>
         </div>
