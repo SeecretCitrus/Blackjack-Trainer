@@ -134,10 +134,20 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
     // Sitting out state
     if (player.sittingOut) {
         panel.className = 'seat-panel sitting-out';
-        panel.innerHTML = `
-            <div class="seat-label">${player.name}</div>
-            <div class="sitout-badge">Sitting Out — ${Math.round(player.balance)}</div>
-        `;
+
+        const sitLbl = document.createElement('div');
+        sitLbl.className = 'seat-label';
+        sitLbl.textContent = player.name;
+        panel.appendChild(sitLbl);
+
+        const sitBadge = document.createElement('div');
+        sitBadge.className = 'sitout-badge';
+        sitBadge.textContent = 'Sitting Out';
+        panel.appendChild(sitBadge);
+
+        // Live balance editor even when sitting out
+        panel.appendChild(buildBalanceRow(player, game));
+
         seat.appendChild(panel);
         return seat;
     }
@@ -163,13 +173,16 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
         panel.appendChild(badge);
     }
 
+    // Inline bet + balance controls
+    panel.appendChild(buildBetBalanceControls(player, game, isBot));
+
     // Hands
     const handsRow = document.createElement('div');
     handsRow.className = 'playerHands';
 
     player.hands.forEach((hand, handIndex) => {
         const isActiveHand = isCurrentPlayer && handIndex === game.currentHandIndex;
-        handsRow.appendChild(buildHand(hand, isActiveHand, game.phase, player.balance));
+        handsRow.appendChild(buildHand(hand, isActiveHand, game.phase));
     });
 
     panel.appendChild(handsRow);
@@ -178,9 +191,67 @@ function buildSeat(posIndex, player, playerIndex, game, isBot) {
 }
 
 // ======================================================
+// Bet + Balance controls row — lives inside the seat panel
+// ======================================================
+function buildBetBalanceControls(player, game, isBot) {
+    const row = document.createElement('div');
+    row.className = 'seat-controls-row';
+
+    // Bet input (editable before/between rounds, locked during play)
+    const betWrap = document.createElement('label');
+    betWrap.className = 'seat-ctrl-label';
+    betWrap.textContent = 'Bet';
+
+    const betInput = document.createElement('input');
+    betInput.type = 'number';
+    betInput.className = 'seat-ctrl-input';
+    betInput.min = game.rules.minBet;
+    betInput.step = 1;
+    betInput.value = player.currentBet;
+    // Lock bet input during active play
+    betInput.disabled = (game.phase === 'PLAYER_TURN' || isBot);
+    betInput.addEventListener('change', () => {
+        const val = parseInt(betInput.value) || game.rules.minBet;
+        player.currentBet = Math.max(val, game.rules.minBet);
+        betInput.value = player.currentBet;
+    });
+
+    betWrap.appendChild(betInput);
+    row.appendChild(betWrap);
+
+    // Balance input (always editable)
+    row.appendChild(buildBalanceRow(player, game));
+
+    return row;
+}
+
+function buildBalanceRow(player, game) {
+    const balWrap = document.createElement('label');
+    balWrap.className = 'seat-ctrl-label';
+    balWrap.textContent = '$';
+
+    const balInput = document.createElement('input');
+    balInput.type = 'number';
+    balInput.className = 'seat-ctrl-input';
+    balInput.min = 0;
+    balInput.step = 10;
+    balInput.value = Math.round(player.balance);
+    balInput.addEventListener('change', () => {
+        const val = parseInt(balInput.value);
+        if (!isNaN(val) && val >= 0) {
+            player.balance = val;
+            if (val >= game.rules.minBet) player.sittingOut = false;
+        }
+    });
+
+    balWrap.appendChild(balInput);
+    return balWrap;
+}
+
+// ======================================================
 // Individual hand block
 // ======================================================
-function buildHand(hand, isActive, phase, playerBalance) {
+function buildHand(hand, isActive, phase) {
     const block = document.createElement('div');
 
     let cls = 'hand';
@@ -209,18 +280,12 @@ function buildHand(hand, isActive, phase, playerBalance) {
     });
     block.appendChild(cardsDiv);
 
-    // Bet and balance shown under the cards
+    // Show hand bet amount (not editable — just informational)
     if (hand.bet > 0) {
         const betEl = document.createElement('div');
         betEl.className = 'hand-bet';
-        betEl.textContent = `Bet: $${hand.bet}`;
+        betEl.textContent = `$${hand.bet}`;
         block.appendChild(betEl);
-    }
-    if (isActive && playerBalance !== undefined) {
-        const balEl = document.createElement('div');
-        balEl.className = 'seat-balance';
-        balEl.textContent = `Bank: $${Math.round(playerBalance)}`;
-        block.appendChild(balEl);
     }
 
     return block;

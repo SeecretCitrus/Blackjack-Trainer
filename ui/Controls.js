@@ -244,8 +244,6 @@ function refreshUI() {
     updateButtons();
     highlightCorrectAction();
     updateExplanationPanel();
-    buildResupplyPanel();
-    buildBalanceEditor();
 }
 
 function showTooltip(button, message) {
