@@ -135,60 +135,119 @@ function mergeStats(parts) {
 // Render results into the DOM
 // ======================================================
 function renderResults(s) {
-    // Summary cards
-    const summaryGrid = document.getElementById("summaryGrid");
-    const evPct = (s.ev * 100).toFixed(3);
+    const evPct      = (s.ev * 100).toFixed(3);
     const evPositive = s.ev >= 0;
+    const inner      = document.getElementById("simResultsInner");
 
-    summaryGrid.innerHTML = `
-        <div class="metric-card highlight ${evPositive ? 'positive' : 'negative'}">
-            <div class="metric-label">Player EV per hand</div>
-            <div class="metric-value">${evPositive ? '+' : ''}${evPct}%</div>
-            <div class="metric-sub">${evPositive ? 'Player edge' : 'House edge: ' + Math.abs(parseFloat(evPct)).toFixed(3) + '%'}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Hands Played</div>
-            <div class="metric-value">${s.handsPlayed.toLocaleString()}</div>
-            <div class="metric-sub">across ${s.roundsPlayed.toLocaleString()} rounds</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Win Rate</div>
-            <div class="metric-value">${(s.winRate * 100).toFixed(1)}%</div>
-            <div class="metric-sub">${s.wins.toLocaleString()} wins</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Avg Hand Value</div>
-            <div class="metric-value">${s.avgHandValue.toFixed(1)}</div>
-            <div class="metric-sub">player final total</div>
-        </div>
-    `;
+    // Build full HTML for results
+    let html = '';
 
-    // Rates table
-    const ratesTbody = document.querySelector("#ratesTable tbody");
-    ratesTbody.innerHTML = `
-        <tr><td>Win rate</td><td>${pct(s.winRate)}</td></tr>
-        <tr><td>Loss rate</td><td>${pct(s.lossRate)}</td></tr>
-        <tr><td>Push rate</td><td>${pct(s.pushRate)}</td></tr>
-        <tr><td>Win rate (excl. pushes)</td><td>${pct(s.wins / (s.handsPlayed - s.pushes))}</td></tr>
-        <tr><td>Player bust rate</td><td>${pct(s.playerBustRate)}</td></tr>
-        <tr><td>Dealer bust rate</td><td>${pct(s.dealerBustRate)}</td></tr>
-        <tr><td>Avg hands per deck before shuffle</td><td>${s.avgHandsPerDeck.toLocaleString()}</td></tr>
-    `;
+    // Summary strip
+    html += `<div class="sim-summary-strip">
+        <div class="sum-card ${evPositive ? 'sum-pos' : 'sum-neg'}">
+            <div class="sum-label">Player EV</div>
+            <div class="sum-value">${evPositive ? '+' : ''}${evPct}%</div>
+            <div class="sum-sub">${evPositive ? 'player edge' : 'house edge: ' + Math.abs(parseFloat(evPct)).toFixed(3) + '%'}</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">Hands</div>
+            <div class="sum-value">${s.handsPlayed.toLocaleString()}</div>
+            <div class="sum-sub">${s.roundsPlayed.toLocaleString()} rounds</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">Win rate</div>
+            <div class="sum-value">${(s.winRate * 100).toFixed(1)}%</div>
+            <div class="sum-sub">${s.wins.toLocaleString()} wins</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">Loss rate</div>
+            <div class="sum-value">${(s.lossRate * 100).toFixed(1)}%</div>
+            <div class="sum-sub">${s.losses.toLocaleString()} losses</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">Push rate</div>
+            <div class="sum-value">${(s.pushRate * 100).toFixed(1)}%</div>
+            <div class="sum-sub">${s.pushes.toLocaleString()} pushes</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">Bust rate (P)</div>
+            <div class="sum-value">${(s.playerBustRate * 100).toFixed(1)}%</div>
+            <div class="sum-sub">dealer: ${(s.dealerBustRate * 100).toFixed(1)}%</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">Avg hand</div>
+            <div class="sum-value">${s.avgHandValue.toFixed(1)}</div>
+            <div class="sum-sub">player final total</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-label">Hands/deck</div>
+            <div class="sum-value">${s.avgHandsPerDeck.toLocaleString()}</div>
+            <div class="sum-sub">before reshuffle</div>
+        </div>
+    </div>`;
 
-    // Starting hand breakdown
-    const breakTbody = document.querySelector("#handBreakdownTable tbody");
-    breakTbody.innerHTML = s.handBreakdown.map(row => `
+    // Starting hand breakdown table — color-coded by win rate
+    html += `<div class="opt-section-title" style="margin-top:16px">Starting hand breakdown</div>`;
+    html += `<p class="sim-note">Win % colored green→red. Hover a cell for full stats.</p>`;
+    html += `<table class="sim-breakdown-table"><thead>
         <tr>
-            <td>${row.label}</td>
-            <td>${row.hands.toLocaleString()}</td>
-            <td>${row.winPct.toFixed(1)}%</td>
-            <td>${row.lossPct.toFixed(1)}%</td>
-            <td>${row.pushPct.toFixed(1)}%</td>
-            <td>${row.bustPct.toFixed(1)}%</td>
-        </tr>
-    `).join('');
+            <th>Starting hand</th>
+            <th>Hands</th>
+            <th>Win %</th>
+            <th>Loss %</th>
+            <th>Push %</th>
+            <th>Bust %</th>
+        </tr></thead><tbody>`;
 
-    resultsInner.classList.remove("hidden");
+    for (const row of s.handBreakdown) {
+        const winColor = winRateColor(row.winPct);
+        html += `<tr>
+            <td class="bd-label">${row.label}</td>
+            <td class="bd-num">${row.hands.toLocaleString()}</td>
+            <td class="bd-win" style="background:${winColor}" title="${row.label}: W${row.winPct.toFixed(1)} L${row.lossPct.toFixed(1)} P${row.pushPct.toFixed(1)} B${row.bustPct.toFixed(1)}">${row.winPct.toFixed(1)}%</td>
+            <td class="bd-num">${row.lossPct.toFixed(1)}%</td>
+            <td class="bd-num">${row.pushPct.toFixed(1)}%</td>
+            <td class="bd-num">${row.bustPct.toFixed(1)}%</td>
+        </tr>`;
+    }
+    html += `</tbody></table>`;
+
+    // Copy-paste export button
+    html += `<div style="margin-top:16px;text-align:right">
+        <button class="copy-btn" onclick="copySimResults()">Copy results for Claude</button>
+    </div>`;
+
+    inner.innerHTML = html;
+    inner.classList.remove("hidden");
+
+    // Store stats for copy function
+    window._lastSimStats = s;
+}
+
+// Color scale: red (low win%) → green (high win%)
+function winRateColor(pct) {
+    const t = Math.max(0, Math.min(1, (pct - 25) / 30)); // 25%=red, 55%=green
+    const r = Math.round(120 - t * 80);
+    const g = Math.round(40  + t * 80);
+    return `rgba(${r},${g},40,0.35)`;
+}
+
+function copySimResults() {
+    const s = window._lastSimStats;
+    if (!s) return;
+    let text = `Simulation Results\n`;
+    text += `EV: ${(s.ev*100).toFixed(3)}% | Win: ${(s.winRate*100).toFixed(2)}% | Loss: ${(s.lossRate*100).toFixed(2)}% | Push: ${(s.pushRate*100).toFixed(2)}%\n`;
+    text += `Hands: ${s.handsPlayed.toLocaleString()} | Player bust: ${(s.playerBustRate*100).toFixed(1)}% | Dealer bust: ${(s.dealerBustRate*100).toFixed(1)}%\n\n`;
+    text += `Starting hand breakdown:\n`;
+    text += `${'Hand'.padEnd(12)}${'Hands'.padStart(8)}${'Win%'.padStart(7)}${'Loss%'.padStart(7)}${'Push%'.padStart(7)}${'Bust%'.padStart(7)}\n`;
+    for (const r of s.handBreakdown) {
+        text += `${r.label.padEnd(12)}${String(r.hands).padStart(8)}${r.winPct.toFixed(1).padStart(7)}${r.lossPct.toFixed(1).padStart(7)}${r.pushPct.toFixed(1).padStart(7)}${r.bustPct.toFixed(1).padStart(7)}\n`;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy results for Claude', 2000);
+    });
 }
 
 function pct(val) {
@@ -401,8 +460,55 @@ function renderOptTables(results, rules) {
         return { sim: data.best, basic, bestEV: data.bestEV, secondEV: data.secondEV };
     });
 
+    html += `<div style="margin-top:16px;text-align:right">
+        <button class="copy-btn" onclick="copyOptResults()">Copy optimizer table for Claude</button>
+    </div>`;
+
     optTableWrap.innerHTML = html;
     optInner.classList.remove('hidden');
     optLegend.classList.remove('hidden');
     optPlaceholder.classList.add('hidden');
+
+    window._lastOptResults = results;
+    window._lastOptRules   = rules;
+}
+
+function copyOptResults() {
+    const results = window._lastOptResults;
+    if (!results) return;
+    const dLabels = ['2','3','4','5','6','7','8','9','10','A'];
+    const dvs     = DEALER_VALUES;
+    let text = '';
+
+    function section(title, rows, getKey, getType) {
+        text += title + '\n';
+        text += 'Player\t' + dLabels.join('\t') + '\n';
+        for (const row of rows) {
+            text += row.label + '\t';
+            text += dvs.map(dv => {
+                const key  = getKey(row, dv);
+                const data = results[getType(row)][key];
+                if (!data) return '--';
+                const ev = (data.bestEV >= 0 ? '+' : '') + data.bestEV.toFixed(2);
+                return data.best + ev;
+            }).join('\t');
+            text += '\n';
+        }
+        text += '\n';
+    }
+
+    const hardRows = HARD_TOTALS.slice().reverse().map(t => ({ label: String(t), total: t }));
+    const softRows = SOFT_OTHERS.slice().reverse().map(o => ({ label: 'A+' + o, other: o, total: o + 11 }));
+    const pairRows = PAIR_VALUES.slice().reverse().map(pv => ({ label: pv === 11 ? 'A,A' : pv+','+pv, pairCard: pv }));
+
+    section('Hard totals', hardRows, (r,dv) => r.total+'_'+dv, () => 'hard');
+    section('Soft totals', softRows, (r,dv) => r.total+'_'+dv, () => 'soft');
+    section('Pairs',       pairRows, (r,dv) => r.pairCard+'_'+dv, () => 'pair');
+
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('#optTableWrap ~ div .copy-btn') || document.querySelector('.copy-btn');
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = orig, 2000);
+    });
 }

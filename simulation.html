@@ -94,21 +94,7 @@
 
         <div id="simResults">
             <div id="simPlaceholder">Configure a simulation and click <strong>Run</strong> to see results.</div>
-            <div id="simResultsInner" class="hidden">
-                <h2>Summary</h2>
-                <div id="summaryGrid"></div>
-                <h2>Rates</h2>
-                <table id="ratesTable" class="sim-table">
-                    <thead><tr><th>Metric</th><th>Value</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-                <h2>Starting Hand Breakdown</h2>
-                <p class="sim-note">Player totals after initial deal, showing outcomes per starting total.</p>
-                <table id="handBreakdownTable" class="sim-table">
-                    <thead><tr><th>Starting Total</th><th>Hands</th><th>Win %</th><th>Loss %</th><th>Push %</th><th>Bust %</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+            <div id="simResultsInner" class="hidden"></div>
         </div>
 
     </div>
@@ -189,6 +175,10 @@
             </div>
             <div id="optResultsInner" class="hidden">
                 <div id="optTableWrap"></div>
+                <div style="margin-top:16px;text-align:center">
+                    <button id="copyOptBtn" class="copy-btn">Copy results for Claude</button>
+                    <div id="copyFeedback" style="font-size:11px;color:rgba(255,215,0,0.6);margin-top:4px;display:none">Copied to clipboard</div>
+                </div>
             </div>
         </div>
 

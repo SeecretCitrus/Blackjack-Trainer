@@ -366,58 +366,58 @@ body {
 
 .opt-table {
     border-collapse: collapse;
-    font-size: 11px;
+    font-size: 12px;
     white-space: nowrap;
 }
 .opt-table th {
-    padding: 4px 8px;
-    background: rgba(0,0,0,0.3);
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.35);
     color: rgba(255,255,255,0.55);
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 1px;
     text-transform: uppercase;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.12);
     text-align: center;
-    min-width: 48px;
+    min-width: 62px;
 }
-.opt-table th:first-child { text-align: left; min-width: 52px; }
+.opt-table th:first-child { text-align: left; min-width: 58px; }
 .opt-row-label {
-    padding: 3px 10px 3px 4px;
-    color: rgba(255,255,255,0.6);
-    font-size: 11px;
+    padding: 4px 12px 4px 6px;
+    color: rgba(255,255,255,0.75);
+    font-size: 12px;
     font-weight: bold;
-    border-right: 1px solid rgba(255,255,255,0.08);
+    border-right: 1px solid rgba(255,255,255,0.1);
 }
 .opt-cell {
-    padding: 2px 4px;
+    padding: 4px 6px;
     text-align: center;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
     cursor: default;
     vertical-align: middle;
+    min-width: 62px;
 }
-.opt-cell:hover { background: rgba(255,255,255,0.06); }
+.opt-cell:hover { background: rgba(255,255,255,0.08); }
 
-/* Matches basic strategy */
-.cell-same { background: rgba(30,80,40,0.4); }
-/* Differs from basic strategy */
-.cell-diff { background: rgba(140,40,20,0.35); outline: 1px solid rgba(255,100,60,0.4); }
+/* Matches basic strategy — green */
+.cell-same { background: rgba(20,70,35,0.5); }
+/* Differs from basic strategy — red */
+.cell-diff { background: rgba(120,30,20,0.45); outline: 1px solid rgba(255,90,60,0.45); }
 
 .cell-action {
     display: block;
     font-weight: bold;
-    font-size: 12px;
-    color: rgba(255,255,220,0.95);
+    font-size: 13px;
+    color: rgba(255,255,220,0.97);
 }
 .cell-basic {
     display: block;
-    font-size: 9px;
-    color: rgba(255,150,120,0.8);
+    font-size: 10px;
+    color: rgba(255,150,120,0.85);
     margin-top: 1px;
 }
 .cell-ev {
     display: block;
-    font-size: 9px;
-    color: rgba(255,215,0,0.55);
+    font-size: 10px;
     margin-top: 1px;
 }
 
@@ -444,3 +444,85 @@ body {
 .ev-neg { color: #e07070; font-weight: bold; }
 .ev-pos-small { color: rgba(110,220,138,0.7); }
 .ev-neg-small { color: rgba(224,112,112,0.7); }
+
+/* ======================================================
+   SIMULATOR RESULTS — new layout
+====================================================== */
+.sim-summary-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.sum-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 7px;
+    padding: 8px 12px;
+    min-width: 90px;
+    flex: 1;
+}
+.sum-card.sum-pos { border-color: rgba(80,200,100,0.35); }
+.sum-card.sum-neg { border-color: rgba(200,80,60,0.35); }
+.sum-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 3px; }
+.sum-value { font-size: 18px; font-weight: bold; color: rgba(255,255,220,0.95); line-height: 1.1; }
+.sum-card.sum-pos .sum-value { color: #6ddb8a; }
+.sum-card.sum-neg .sum-value { color: #e07070; }
+.sum-sub   { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+/* Breakdown table */
+.sim-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.sim-breakdown-table th {
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.3);
+    color: rgba(255,255,255,0.55);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-align: right;
+}
+.sim-breakdown-table th:first-child { text-align: left; }
+.bd-label { padding: 4px 10px; color: rgba(255,255,255,0.75); font-weight: bold; }
+.bd-num   { padding: 4px 10px; text-align: right; color: rgba(255,255,220,0.8); }
+.bd-win   { padding: 4px 10px; text-align: right; font-weight: bold; color: rgba(255,255,220,0.95); border-radius: 3px; }
+.sim-breakdown-table tr:hover td { background: rgba(255,255,255,0.04); }
+
+/* Copy button */
+.copy-btn {
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.65);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.copy-btn:hover { background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.9); }
+
+/* Copy button */
+.copy-btn {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,215,0,0.3);
+    color: rgba(255,215,0,0.75);
+    font-size: 12px;
+    padding: 6px 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.15s;
+    letter-spacing: 0.5px;
+}
+.copy-btn:hover { background: rgba(255,215,0,0.1); }
+
+/* Breakdown table in simulator tab */
+.sim-breakdown-table { font-size: 12px; }
+.sim-breakdown-table td { padding: 4px 8px; }
+.sim-breakdown-table th { min-width: 56px; }
+
+/* Wider wrapper for optimizer results */
+#simWrapper { max-width: 1300px; }
