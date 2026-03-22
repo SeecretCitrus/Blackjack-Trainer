@@ -198,13 +198,13 @@ h1 {
     transform: translate(-50%, -100%);
 }
 
-.seat.s1 { left:  7%; top: 78%; }
-.seat.s2 { left: 20%; top: 86%; }
-.seat.s3 { left: 33%; top: 90%; }
-.seat.s4 { left: 50%; top: 91%; }
-.seat.s5 { left: 67%; top: 90%; }
-.seat.s6 { left: 80%; top: 86%; }
-.seat.s7 { left: 93%; top: 78%; }
+.seat.s1 { left:  7%; top: 88%; }
+.seat.s2 { left: 20%; top: 94%; }
+.seat.s3 { left: 33%; top: 97%; }
+.seat.s4 { left: 50%; top: 98%; }
+.seat.s5 { left: 67%; top: 97%; }
+.seat.s6 { left: 80%; top: 94%; }
+.seat.s7 { left: 93%; top: 88%; }
 
 .seat-name {
     font-size: 7px;
@@ -220,13 +220,19 @@ h1 {
     background: rgba(0,0,0,0.32);
     border: 1px solid rgba(255,255,255,0.13);
     border-radius: 7px;
-    padding: 4px 6px;
+    padding: 5px 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
     overflow: visible;
 }
+
+/* More padding for larger card sizes */
+#bj-table[data-players="1"] .seat-panel { padding: 8px 14px; gap: 6px; }
+#bj-table[data-players="2"] .seat-panel { padding: 7px 12px; gap: 5px; }
+#bj-table[data-players="3"] .seat-panel { padding: 6px 10px; gap: 5px; }
+#bj-table[data-players="4"] .seat-panel { padding: 6px 9px;  gap: 4px; }
 
 .seat-panel.active {
     border-color: gold;

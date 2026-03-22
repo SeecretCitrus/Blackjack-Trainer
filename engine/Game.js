@@ -190,26 +190,42 @@ class Game {
 
     // ======================================================
     // Advance to next hand / player
+    // Find the next hand that hasn't been played yet.
+    // We scan all hands so right-first split order works correctly.
     // ======================================================
     nextTurn() {
         const player = this.currentPlayer;
 
-        if (this.currentHandIndex < player.hands.length - 1) {
-            this.currentHandIndex++;
-            const nextHand = player.hands[this.currentHandIndex];
-            if (nextHand.cards.length === 1) {
+        // Find next unfinished hand (any index, not just currentHandIndex+1)
+        const nextIndex = player.hands.findIndex(
+            (h, i) => i !== this.currentHandIndex && !h.isFinished && h.cards.length > 0
+        );
+
+        // Also check for hands with only 1 card (waiting for second card after split)
+        const pendingIndex = player.hands.findIndex(
+            (h, i) => i !== this.currentHandIndex && h.cards.length === 1
+        );
+
+        const targetIndex = pendingIndex !== -1 ? pendingIndex :
+                            nextIndex    !== -1 ? nextIndex    : -1;
+
+        if (targetIndex !== -1) {
+            this.currentHandIndex = targetIndex;
+            const targetHand = player.hands[targetIndex];
+            // Deal second card if this hand only has one (came from a split)
+            if (targetHand.cards.length === 1) {
                 const newCard = this.shoe.deal();
-                nextHand.addCard(newCard);
-                if (!this.silent) console.log(player.name + " hand " + (this.currentHandIndex + 1) + " receives: " + newCard.rank);
-                if (nextHand.isSplitAces) {
-                    nextHand.isFinished = true;
+                targetHand.addCard(newCard);
+                if (!this.silent) console.log(player.name + " hand " + (targetIndex + 1) + " receives: " + newCard.rank);
+                if (targetHand.isSplitAces) {
+                    targetHand.isFinished = true;
                     this.nextTurn();
                 }
             }
             return;
         }
 
-        // Advance to next active player
+        // All hands for this player are done — advance to next active player
         this.currentHandIndex = 0;
         this.currentPlayerIndex++;
         while (
@@ -372,7 +388,17 @@ class Game {
 
         if (!this.silent) console.log(player.name + " splits.");
 
-        if (isAceSplit) this.nextTurn();
+        if (isAceSplit) {
+            this.nextTurn();
+        } else {
+            // Advance to the RIGHT (new) hand first — play right hand before left
+            this.currentHandIndex = handIndex + 1;
+            // Deal second card to the right hand now
+            const rightHand = player.hands[this.currentHandIndex];
+            if (rightHand.cards.length === 1) {
+                rightHand.addCard(this.shoe.deal());
+            }
+        }
     }
 
     // ======================================================
