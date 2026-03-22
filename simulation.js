@@ -41,17 +41,19 @@ async function runSim() {
 }
 
 // Run simulation in async chunks so UI stays responsive
+// Chunk size scales with total — bigger runs use larger chunks for efficiency
 function runInChunks(config) {
     return new Promise((resolve) => {
-        // For smaller runs just go synchronous
-        if (config.numRounds <= 100000) {
+        const CHUNK = config.numRounds <= 100000 ? config.numRounds
+                    : config.numRounds <= 1000000 ? 50000
+                    : 200000;
+
+        if (config.numRounds <= CHUNK) {
             const stats = Simulator.runDetailed(config);
             resolve(stats);
             return;
         }
 
-        // For large runs, break into chunks with requestAnimationFrame pauses
-        const CHUNK = 20000;
         let completed = 0;
         const allStats = [];
 
