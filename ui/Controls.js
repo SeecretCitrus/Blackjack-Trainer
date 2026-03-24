@@ -379,7 +379,8 @@ function setupControls() {
                 const before = this.shoe.cards.length;
                 origCheckShuffle();
                 if (this.shoe.cards.length > before) {
-                    counter.reset();
+                    if (counter) counter.reset();
+                    // Re-hook onto the new Shoe object created by checkShuffle
                     hookCounterIntoShoe();
                 }
             };
@@ -389,14 +390,9 @@ function setupControls() {
 
         applyCardScale(numPlayers);
         buildBetPanel();
-        game.startRound();
-        // Count the initial deal cards
-        countVisibleCards();
-        // Clear bet panel once round has started — bets are locked
         const bp = document.getElementById("betPanel");
         if (bp) bp.innerHTML = "";
-        refreshUI();
-        maybeRunBots();
+        animatedStartRound();
     });
 
     document.getElementById("hitBtn").addEventListener("click",   () => handleManualAction("H"));
@@ -408,21 +404,9 @@ function setupControls() {
         if (!game || game.phase !== "ROUND_OVER") return;
         applyCardScale(game.players.length);
         buildBetPanel();
-        // Reset shoe deal counter for hole-card tracking each new round
-        if (game.shoe) {
-            game.shoe._dealCount = 0;
-            game.shoe._holeCardIdx = 2 * (game.players.filter(p=>!p.sittingOut).length + 1);
-        }
-        game.startRound();
-        countVisibleCards();
         const bp = document.getElementById("betPanel");
         if (bp) bp.innerHTML = "";
-        refreshUI();
-        if (game.phase === 'DEALER_TURN') {
-            runDealerSequence();
-        } else {
-            maybeRunBots();
-        }
+        animatedStartRound();
     });
 
     document.getElementById("trainerToggle").addEventListener("change", () => {
@@ -440,15 +424,19 @@ function setupControls() {
             document.getElementById("countPanel").innerHTML = "";
             return;
         }
-        // Start counting mid-game — preserve current shoe position
         if (game) {
             const system   = document.getElementById("countSystemSelect")?.value ?? "hilo";
             const numDecks = parseInt(document.getElementById("numDecksSelect").value);
-            counter = new CardCounter(numDecks, system);
-            counter.active = true;
-            // Don't reset — set cardsDealt from actual shoe position
-            // so true count is accurate for remaining decks
-            counter.cardsDealt = game.startingDeckSize - game.shoe.cards.length;
+            // Preserve existing counter state if it exists (just reactivate it)
+            if (counter && counter.numDecks === numDecks && counter.system.name) {
+                // Same game, same shoe — just re-enable
+                counter.active = true;
+            } else {
+                // New counter — set cardsDealt from shoe position for accurate true count
+                counter = new CardCounter(numDecks, system);
+                counter.active = true;
+                counter.cardsDealt = game.startingDeckSize - game.shoe.cards.length;
+            }
             hookCounterIntoShoe();
         }
         updateCountPanel();
@@ -598,20 +586,19 @@ function dealerHitNext() {
 // whole shoe with no manual tracking needed.
 
 function hookCounterIntoShoe() {
-    if (!counter || !game) return;
+    if (!game) return;
     const shoe = game.shoe;
-    if (shoe._countHooked) return;
-    const origDeal = shoe.deal.bind(shoe);
+    // Always re-hook — use a getter so the deal closure always reads the
+    // CURRENT counter variable, not a snapshot captured at hook time.
+    // This means toggling the counter mid-game works correctly.
+    const origDeal = shoe._origDeal ?? shoe.deal.bind(shoe);
+    shoe._origDeal = origDeal; // save original so we can re-hook safely
 
-    // We track whether the NEXT dealer card is the hole card using a flag
-    // set by prepareForDeal() at the start of each round's initial deal.
-    // This is much more reliable than position arithmetic across rounds.
-    shoe._nextDealerCardIsHole = false;
+    shoe._nextDealerCardIsHole = shoe._nextDealerCardIsHole ?? false;
     shoe.deal = function() {
         const card = origDeal();
-        if (card && counter) {
+        if (card && counter && counter.active) {
             if (this._nextDealerCardIsHole) {
-                // This is the hole card — store it, don't count yet
                 counter._holeCard = card;
                 this._nextDealerCardIsHole = false;
             } else {
@@ -620,7 +607,6 @@ function hookCounterIntoShoe() {
         }
         return card;
     };
-    shoe._countHooked = true;
 }
 
 // Count the hole card when it's revealed (called at start of dealer sequence)
