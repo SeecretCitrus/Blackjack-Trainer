@@ -440,12 +440,15 @@ function setupControls() {
             document.getElementById("countPanel").innerHTML = "";
             return;
         }
-        // Start counting mid-game if a game is running
+        // Start counting mid-game — preserve current shoe position
         if (game) {
-            const system = document.getElementById("countSystemSelect")?.value ?? "hilo";
+            const system   = document.getElementById("countSystemSelect")?.value ?? "hilo";
             const numDecks = parseInt(document.getElementById("numDecksSelect").value);
             counter = new CardCounter(numDecks, system);
             counter.active = true;
+            // Don't reset — set cardsDealt from actual shoe position
+            // so true count is accurate for remaining decks
+            counter.cardsDealt = game.startingDeckSize - game.shoe.cards.length;
             hookCounterIntoShoe();
         }
         updateCountPanel();
@@ -454,10 +457,13 @@ function setupControls() {
     // System select change — reinitialise counter
     document.getElementById("countSystemSelect")?.addEventListener("change", () => {
         if (!game || !document.getElementById("countToggle").checked) return;
-        const system = document.getElementById("countSystemSelect").value;
+        const system   = document.getElementById("countSystemSelect").value;
         const numDecks = parseInt(document.getElementById("numDecksSelect").value);
+        // Preserve cardsDealt so true count denominator stays correct
+        const prevDealt = counter ? counter.cardsDealt : (game.startingDeckSize - game.shoe.cards.length);
         counter = new CardCounter(numDecks, system);
         counter.active = true;
+        counter.cardsDealt = prevDealt;
         hookCounterIntoShoe();
         updateCountPanel();
     });
@@ -724,6 +730,106 @@ function updateCountPanel() {
     </div>`;
 
     panel.innerHTML = html;
+}
+
+// ======================================================
+// Animated initial deal
+// Deals cards one at a time: P1c1, P2c1...Dealer(up), P1c2, P2c2...Dealer(hole)
+// After all cards are dealt, continues normal game flow.
+// ======================================================
+const DEAL_DELAY_MS = 220; // ms between each card during initial deal
+
+function animatedStartRound() {
+    // Run all the round-start logic EXCEPT the actual deal
+    game.phase            = "BETTING";
+    game.currentHandIndex = 0;
+    game.currentPlayerIndex = 0;
+    game.checkShuffle();
+    game.resetHands();
+
+    // Place bets
+    for (const player of game.players) {
+        if (player.balance < game.rules.minBet) {
+            player.sittingOut = true;
+        } else {
+            player.sittingOut = false;
+            const betAmount = player.currentBet;
+            player.placeBet(betAmount, game.rules.minBet);
+        }
+    }
+
+    const active = game.activePlayers();
+    if (active.length === 0) {
+        game.phase = "ROUND_OVER";
+        refreshUI();
+        return;
+    }
+
+    // Build the deal sequence: [P1, P2...PN, Dealer] x2
+    // but dealer's second card is hole card (don't count until revealed)
+    const dealSteps = [];
+    for (let round = 0; round < 2; round++) {
+        for (const player of active) {
+            dealSteps.push({ target: player, isDealer: false, isHole: false });
+        }
+        dealSteps.push({ target: game.dealer, isDealer: true, isHole: round === 1 });
+    }
+
+    // Flag the hole card in the shoe hook
+    if (game.shoe._nextDealerCardIsHole !== undefined) {
+        // will be set step by step below
+    }
+
+    let stepIndex = 0;
+    function dealNext() {
+        if (stepIndex >= dealSteps.length) {
+            // All cards dealt — run naturals check and continue
+            game.phase = "PLAYER_TURN"; // temporary so checkNaturals works
+            game.checkNaturals();
+            if (game.phase === "ROUND_OVER") {
+                game.settleAllBets();
+                refreshUI();
+                updateButtons();
+                return;
+            }
+            // Find first active player
+            game.currentPlayerIndex = 0;
+            while (
+                game.currentPlayerIndex < game.players.length &&
+                game.players[game.currentPlayerIndex].sittingOut
+            ) game.currentPlayerIndex++;
+
+            if (game.currentPlayerIndex >= game.players.length) {
+                game.currentPlayer = null;
+                game.phase = "ROUND_OVER";
+            } else {
+                game.currentPlayer = game.players[game.currentPlayerIndex];
+                game.phase = "PLAYER_TURN";
+            }
+            refreshUI();
+            updateButtons();
+            maybeRunBots();
+            return;
+        }
+
+        const step = dealSteps[stepIndex++];
+
+        // Mark hole card so counter skips it
+        if (step.isHole && game.shoe) {
+            game.shoe._nextDealerCardIsHole = true;
+        }
+
+        const card = game.shoe.deal();
+        if (!card) { dealNext(); return; }
+
+        step.target.getCard(card, 0);
+        refreshUI();
+
+        setTimeout(dealNext, DEAL_DELAY_MS);
+    }
+
+    refreshUI(); // show empty table first
+    setTimeout(dealNext, DEAL_DELAY_MS);
 }
 
 export { setupControls, updateButtons, handleManualAction };
