@@ -89,19 +89,7 @@ function buildDealerZone(game) {
     const cardsDiv = document.createElement('div');
     cardsDiv.className = 'dealer-cards';
 
-    const dealerHand = game.dealer.hands[0];
-    if (dealerHand && dealerHand.cards.length > 0) {
-        dealerHand.cards.forEach((card, i) => {
-            if (game.currentPlayer !== null && i === 1) {
-                const hole = document.createElement('div');
-                hole.id = 'holeCard';
-                hole.className = 'card hole';
-                cardsDiv.appendChild(hole);
-            } else {
-                cardsDiv.innerHTML += renderCard(card);
-            }
-        });
-    }
+    const dealerHand = game.dealer.hands[0];\n    if (dealerHand && dealerHand.cards.length > 0) {\n        dealerHand.cards.forEach((card, i) => {\n            if (game.currentPlayer !== null && i === 1) {\n                // Still playing — hole card hidden\n                const hole = document.createElement('div');\n                hole.id = 'holeCard';\n                hole.className = 'card hole';\n                cardsDiv.appendChild(hole);\n            } else {\n                // Dealer done or initial deal — show card face\n                const cardEl = document.createElement('div');\n                cardEl.innerHTML = renderCard(card);\n                cardsDiv.appendChild(cardEl);\n            }\n        });\n    }
 
     zone.appendChild(cardsDiv);
 

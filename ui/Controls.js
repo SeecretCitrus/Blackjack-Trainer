@@ -353,22 +353,27 @@ function setupControls() {
                 const activePlayers = this.activePlayers().length;
                 // Total cards in initial deal = (activePlayers + 1) * 2
                 // The hole card is the very last one dealt
-                // We flag it by counting deals within this call
                 let dealsThisCall = 0;
                 const totalCards  = (activePlayers + 1) * 2;
                 const holeCardPos = totalCards; // last card
+                
+                // Mark the shoe so the hook knows to expect the hole card
+                this.shoe._expectHoleCardAt = holeCardPos;
+                this.shoe._dealsInThisSequence = 0;
+                
                 const origDeal    = this.shoe.deal.bind(this.shoe);
                 this.shoe.deal    = function() {
-                    dealsThisCall++;
-                    if (dealsThisCall === holeCardPos) {
-                        // Flag: next deal call from this position is the hole card
+                    this._dealsInThisSequence = (this._dealsInThisSequence || 0) + 1;
+                    if (this._dealsInThisSequence === this._expectHoleCardAt) {
                         this._nextDealerCardIsHole = true;
                     }
                     return origDeal();
                 };
                 origInitialDeal();
-                // Restore the counting-aware deal (hookCounterIntoShoe already set it,
-                // but we replaced it above — re-hook to restore counting behaviour)
+                // Clear the sequence marker but keep the hole card stored in counter
+                this.shoe._expectHoleCardAt = null;
+                this.shoe._dealsInThisSequence = 0;
+                // Restore the counting-aware deal
                 hookCounterIntoShoe();
             };
 
@@ -616,9 +621,13 @@ function hookCounterIntoShoe() {
 
 // Count the hole card when it's revealed (called at start of dealer sequence)
 function countHoleCard() {
-    if (game && game.shoe && game.shoe.counter && game.shoe.counter._holeCard) {
-        game.shoe.counter.countCard(game.shoe.counter._holeCard);
-        game.shoe.counter._holeCard = null;
+    if (game && game.shoe && game.shoe.counter) {
+        if (game.shoe.counter._holeCard) {
+            game.shoe.counter.countCard(game.shoe.counter._holeCard);
+            game.shoe.counter._holeCard = null;
+        }
+        // Also ensure _nextDealerCardIsHole is cleared so future hole cards work
+        game.shoe._nextDealerCardIsHole = false;
     }
 }
 
