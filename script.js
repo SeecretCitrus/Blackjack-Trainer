@@ -1,11 +1,11 @@
-try {
-    import { setupControls } from './ui/Controls.js';
+import { setupControls } from './ui/Controls.js';
 
+try {
     console.log("JavaScript is connected!");
 
     setupControls();
 } catch (e) {
-    console.error("Error loading JavaScript modules:", e);
+    console.error("Error in setupControls:", e);
 }
 
 
