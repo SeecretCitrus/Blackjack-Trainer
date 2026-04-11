@@ -313,7 +313,9 @@ function setupControls() {    console.log("setupControls called");    document.g
     });
     rebuildBotSettings();
 
-    document.getElementById("startBtn").addEventListener("click", () => {
+    const startBtn = document.getElementById("startBtn");
+    console.log("startBtn found:", !!startBtn);
+    startBtn.addEventListener("click", () => {
         console.log("Start button clicked");
         const numDecks   = parseInt(document.getElementById("numDecksSelect").value);
         const S17        = document.getElementById("S17Select").value === "true";
