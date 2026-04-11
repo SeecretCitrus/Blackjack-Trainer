@@ -427,8 +427,10 @@ function setupControls() {    console.log("setupControls called");    document.g
         const sysLabel = document.getElementById("countSystemLabel");
         if (sysLabel) sysLabel.style.display = countOn ? "" : "none";
         if (!countOn) {
-            if (game && game.shoe) game.shoe.counter = null;
-            counter = null;
+            if (game && game.shoe && game.shoe.counter) {
+                game.shoe.counter.active = false;
+            }
+            counter = game && game.shoe ? game.shoe.counter : null;
             document.getElementById("countPanel").innerHTML = "";
             return;
         }
@@ -608,11 +610,12 @@ function hookCounterIntoShoe() {
     shoe._nextDealerCardIsHole = shoe._nextDealerCardIsHole ?? false;
     shoe.deal = function() {
         const card = origDeal();
+        if (this._nextDealerCardIsHole && this.counter) {
+            this.counter._holeCard = card;
+            this._nextDealerCardIsHole = false;
+        }
         if (card && this.counter && this.counter.active) {
-            if (this._nextDealerCardIsHole) {
-                this.counter._holeCard = card;
-                this._nextDealerCardIsHole = false;
-            } else {
+            if (!this._nextDealerCardIsHole) {
                 this.counter.countCard(card);
             }
         }

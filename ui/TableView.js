@@ -92,14 +92,15 @@ function buildDealerZone(game) {
     const dealerHand = game.dealer.hands[0];
     if (dealerHand && dealerHand.cards.length > 0) {
         dealerHand.cards.forEach((card, i) => {
-            if (game.currentPlayer !== null && i === 1) {
-                // Still playing — hole card hidden
+            const hideHoleCard = i === 1 &&
+                game.phase !== 'DEALER_TURN' &&
+                game.phase !== 'ROUND_OVER';
+            if (hideHoleCard) {
                 const hole = document.createElement('div');
                 hole.id = 'holeCard';
                 hole.className = 'card hole';
                 cardsDiv.appendChild(hole);
             } else {
-                // Dealer done or initial deal — show card face
                 const cardEl = document.createElement('div');
                 cardEl.innerHTML = renderCard(card);
                 cardsDiv.appendChild(cardEl);
