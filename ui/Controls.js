@@ -361,58 +361,56 @@ function setupControls() {    console.log("setupControls called");    document.g
             p.currentBet      = minBet;
         });
 
-        // Initialise card counter if enabled
+        // Initialise the card-counting engine for every game so counts are tracked
+        // even when the display toggle starts off.
         const countOn = document.getElementById('countToggle')?.checked;
         const system  = getSelectedCountSystem();
-        countCounters = { hilo: null, omega2: null };
-        if (countOn) {
-            resetCountCounters(numDecks);
-            setActiveCounter(system);
-            // Hook deal() so every card is counted as it leaves the shoe
-            hookCounterIntoShoe();
+        resetCountCounters(numDecks);
+        setActiveCounter(system);
+        // Hook deal() so every card is counted as it leaves the shoe
+        hookCounterIntoShoe();
 
-            // Wrap initialDeal to flag the hole card before it's dealt.
-            // Deal order: [P1..PN, Dealer] × 2 rounds.
-            // The hole card is the LAST card of the second round = dealer's 2nd card.
-            const origInitialDeal = game.initialDeal.bind(game);
-            game.initialDeal = function() {
-                const activePlayers = this.activePlayers().length;
-                // Total cards in initial deal = (activePlayers + 1) * 2
-                // The hole card is the very last one dealt
-                // We flag it by counting deals within this call
-                let dealsThisCall = 0;
-                const totalCards  = (activePlayers + 1) * 2;
-                const holeCardPos = totalCards; // last card
-                const origDeal    = this.shoe.deal.bind(this.shoe);
-                this.shoe.deal    = function() {
-                    dealsThisCall++;
-                    if (dealsThisCall === holeCardPos) {
-                        // Flag: next deal call from this position is the hole card
-                        this._nextDealerCardIsHole = true;
-                    }
-                    return origDeal();
-                };
-                origInitialDeal();
-                // Restore the counting-aware deal (hookCounterIntoShoe already set it,
-                // but we replaced it above — re-hook to restore counting behaviour)
-                hookCounterIntoShoe();
-            };
-
-            // Re-hook after reshuffles (checkShuffle creates a new Shoe object)
-            const origCheckShuffle = game.checkShuffle.bind(game);
-            game.checkShuffle = function() {
-                const before = this.shoe.cards.length;
-                origCheckShuffle();
-                if (this.shoe.cards.length > before) {
-                    if (countCounters.hilo) countCounters.hilo.reset();
-                    if (countCounters.omega2) countCounters.omega2.reset();
-                    setActiveCounter(getSelectedCountSystem());
-                    hookCounterIntoShoe();
+        // Wrap initialDeal to flag the hole card before it's dealt.
+        // Deal order: [P1..PN, Dealer] × 2 rounds.
+        // The hole card is the LAST card of the second round = dealer's 2nd card.
+        const origInitialDeal = game.initialDeal.bind(game);
+        game.initialDeal = function() {
+            const activePlayers = this.activePlayers().length;
+            // Total cards in initial deal = (activePlayers + 1) * 2
+            // The hole card is the very last one dealt
+            // We flag it by counting deals within this call
+            let dealsThisCall = 0;
+            const totalCards  = (activePlayers + 1) * 2;
+            const holeCardPos = totalCards; // last card
+            const origDeal    = this.shoe.deal.bind(this.shoe);
+            this.shoe.deal    = function() {
+                dealsThisCall++;
+                if (dealsThisCall === holeCardPos) {
+                    // Flag: next deal call from this position is the hole card
+                    this._nextDealerCardIsHole = true;
                 }
+                return origDeal();
             };
-        } else {
-            counter = null;
-            game.shoe.counter = null;
+            origInitialDeal();
+            // Restore the counting-aware deal (hookCounterIntoShoe already set it,
+            // but we replaced it above — re-hook to restore counting behaviour)
+            hookCounterIntoShoe();
+        };
+
+        // Re-hook after reshuffles (checkShuffle creates a new Shoe object)
+        const origCheckShuffle = game.checkShuffle.bind(game);
+        game.checkShuffle = function() {
+            const before = this.shoe.cards.length;
+            origCheckShuffle();
+            if (this.shoe.cards.length > before) {
+                if (countCounters.hilo) countCounters.hilo.reset();
+                if (countCounters.omega2) countCounters.omega2.reset();
+                setActiveCounter(getSelectedCountSystem());
+                hookCounterIntoShoe();
+            }
+        };
+        if (!countOn) {
+            document.getElementById("countPanel").innerHTML = "";
         }
 
         applyCardScale(numPlayers);
