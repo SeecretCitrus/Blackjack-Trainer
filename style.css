@@ -347,7 +347,6 @@ h1 {
     flex-shrink: 0;
     padding: 3px 4px;
     transition: transform 0.15s ease;
-    animation: cardDeal 0.25s ease forwards;
 }
 
 .card:hover { transform: translateY(-4px); }
