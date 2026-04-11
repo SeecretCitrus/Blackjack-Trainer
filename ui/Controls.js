@@ -8,7 +8,29 @@ const DEALER_DELAY_MS = 500;
 
 let game;
 let botSeats = [];   // botSeats[playerIndex] = true|false
-let counter  = null; // CardCounter instance, null when counting is off
+let counter  = null; // active CardCounter instance for display
+let countCounters = {
+    hilo:   null,
+    omega2: null,
+};
+
+function getSelectedCountSystem() {
+    return document.getElementById('countSystemSelect')?.value ?? 'hilo';
+}
+
+function setActiveCounter(system) {
+    counter = countCounters[system] ?? null;
+    if (game && game.shoe) {
+        game.shoe.counter = counter;
+    }
+}
+
+function resetCountCounters(numDecks) {
+    countCounters.hilo   = new CardCounter(numDecks, 'hilo');
+    countCounters.omega2 = new CardCounter(numDecks, 'omega2');
+    countCounters.hilo.active = true;
+    countCounters.omega2.active = true;
+}
 
 // ======================================================
 // Bot seat UI — rebuilt when player count changes
@@ -341,11 +363,11 @@ function setupControls() {    console.log("setupControls called");    document.g
 
         // Initialise card counter if enabled
         const countOn = document.getElementById('countToggle')?.checked;
-        const system  = document.getElementById('countSystemSelect')?.value ?? 'hilo';
+        const system  = getSelectedCountSystem();
+        countCounters = { hilo: null, omega2: null };
         if (countOn) {
-            counter = new CardCounter(numDecks, system);
-            counter.active = true;
-            game.shoe.counter = counter;
+            resetCountCounters(numDecks);
+            setActiveCounter(system);
             // Hook deal() so every card is counted as it leaves the shoe
             hookCounterIntoShoe();
 
@@ -379,20 +401,18 @@ function setupControls() {    console.log("setupControls called");    document.g
             // Re-hook after reshuffles (checkShuffle creates a new Shoe object)
             const origCheckShuffle = game.checkShuffle.bind(game);
             game.checkShuffle = function() {
-                const oldCounter = this.shoe.counter;
                 const before = this.shoe.cards.length;
                 origCheckShuffle();
                 if (this.shoe.cards.length > before) {
-                    if (oldCounter) {
-                        oldCounter.reset();
-                        this.shoe.counter = oldCounter;
-                    }
-                    // Re-hook onto the new Shoe object created by checkShuffle
+                    if (countCounters.hilo) countCounters.hilo.reset();
+                    if (countCounters.omega2) countCounters.omega2.reset();
+                    setActiveCounter(getSelectedCountSystem());
                     hookCounterIntoShoe();
                 }
             };
         } else {
             counter = null;
+            game.shoe.counter = null;
         }
 
         applyCardScale(numPlayers);
@@ -427,29 +447,19 @@ function setupControls() {    console.log("setupControls called");    document.g
         const sysLabel = document.getElementById("countSystemLabel");
         if (sysLabel) sysLabel.style.display = countOn ? "" : "none";
         if (!countOn) {
-            if (game && game.shoe && game.shoe.counter) {
-                game.shoe.counter.active = false;
-            }
-            counter = game && game.shoe ? game.shoe.counter : null;
             document.getElementById("countPanel").innerHTML = "";
             return;
         }
         if (game) {
-            const system   = document.getElementById("countSystemSelect")?.value ?? "hilo";
+            const system   = getSelectedCountSystem();
             const numDecks = parseInt(document.getElementById("numDecksSelect").value);
-            // Preserve existing counter state if it exists (just reactivate it)
-            if (game.shoe.counter && game.shoe.counter.numDecks === numDecks && game.shoe.counter.system.name === SYSTEMS[system]?.name) {
-                // Same game, same shoe — just re-enable
-                game.shoe.counter.active = true;
-                counter = game.shoe.counter;
+            if (!countCounters.hilo || !countCounters.omega2) {
+                resetCountCounters(numDecks);
+                setActiveCounter(system);
+                hookCounterIntoShoe();
             } else {
-                // New counter — set cardsDealt from shoe position for accurate true count
-                counter = new CardCounter(numDecks, system);
-                counter.active = true;
-                counter.cardsDealt = game.startingDeckSize - game.shoe.cards.length;
-                game.shoe.counter = counter;
+                setActiveCounter(system);
             }
-            hookCounterIntoShoe();
         }
         updateCountPanel();
     });
@@ -457,15 +467,13 @@ function setupControls() {    console.log("setupControls called");    document.g
     // System select change — reinitialise counter
     document.getElementById("countSystemSelect")?.addEventListener("change", () => {
         if (!game || !document.getElementById("countToggle").checked) return;
-        const system   = document.getElementById("countSystemSelect").value;
+        const system   = getSelectedCountSystem();
         const numDecks = parseInt(document.getElementById("numDecksSelect").value);
-        // Preserve cardsDealt so true count denominator stays correct
-        const prevDealt = game.shoe.counter ? game.shoe.counter.cardsDealt : (game.startingDeckSize - game.shoe.cards.length);
-        counter = new CardCounter(numDecks, system);
-        counter.active = true;
-        counter.cardsDealt = prevDealt;
-        game.shoe.counter = counter;
-        hookCounterIntoShoe();
+        if (!countCounters.hilo || !countCounters.omega2) {
+            resetCountCounters(numDecks);
+            hookCounterIntoShoe();
+        }
+        setActiveCounter(system);
         updateCountPanel();
     });
 
@@ -602,22 +610,21 @@ function hookCounterIntoShoe() {
     if (!game) return;
     const shoe = game.shoe;
     // Always re-hook — use a getter so the deal closure always reads the
-    // CURRENT counter variable, not a snapshot captured at hook time.
-    // This means toggling the counter mid-game works correctly.
+    // CURRENT counted cards state, not a snapshot captured at hook time.
     const origDeal = shoe._origDeal ?? shoe.deal.bind(shoe);
     shoe._origDeal = origDeal; // save original so we can re-hook safely
 
     shoe._nextDealerCardIsHole = shoe._nextDealerCardIsHole ?? false;
     shoe.deal = function() {
         const card = origDeal();
-        if (this._nextDealerCardIsHole && this.counter) {
-            this.counter._holeCard = card;
+        const isHoleDeal = this._nextDealerCardIsHole;
+        if (isHoleDeal) {
+            if (countCounters.hilo)   countCounters.hilo._holeCard   = card;
+            if (countCounters.omega2) countCounters.omega2._holeCard = card;
             this._nextDealerCardIsHole = false;
-        }
-        if (card && this.counter && this.counter.active) {
-            if (!this._nextDealerCardIsHole) {
-                this.counter.countCard(card);
-            }
+        } else if (card) {
+            if (countCounters.hilo)   countCounters.hilo.countCard(card);
+            if (countCounters.omega2) countCounters.omega2.countCard(card);
         }
         return card;
     };
@@ -625,9 +632,14 @@ function hookCounterIntoShoe() {
 
 // Count the hole card when it's revealed (called at start of dealer sequence)
 function countHoleCard() {
-    if (game && game.shoe.counter && game.shoe.counter._holeCard) {
-        game.shoe.counter.countCard(game.shoe.counter._holeCard);
-        game.shoe.counter._holeCard = null;
+    if (!game || !game.shoe) return;
+    if (countCounters.hilo && countCounters.hilo._holeCard) {
+        countCounters.hilo.countCard(countCounters.hilo._holeCard);
+        countCounters.hilo._holeCard = null;
+    }
+    if (countCounters.omega2 && countCounters.omega2._holeCard) {
+        countCounters.omega2.countCard(countCounters.omega2._holeCard);
+        countCounters.omega2._holeCard = null;
     }
 }
 
