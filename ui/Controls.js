@@ -301,8 +301,7 @@ function handleManualAction(action) {
 // ======================================================
 // Setup
 // ======================================================
-function setupControls() {
-    document.getElementById("hitBtn").disabled    = true;
+function setupControls() {    console.log("setupControls called");    document.getElementById("hitBtn").disabled    = true;
     document.getElementById("standBtn").disabled  = true;
     document.getElementById("doubleBtn").disabled = true;
     document.getElementById("splitBtn").disabled  = true;
@@ -315,6 +314,7 @@ function setupControls() {
     rebuildBotSettings();
 
     document.getElementById("startBtn").addEventListener("click", () => {
+        console.log("Start button clicked");
         const numDecks   = parseInt(document.getElementById("numDecksSelect").value);
         const S17        = document.getElementById("S17Select").value === "true";
         const numPlayers = parseInt(document.getElementById("numPlayersSelect").value);
@@ -733,9 +733,10 @@ function updateCountPanel() {
 // Deals cards one at a time: P1c1, P2c1...Dealer(up), P1c2, P2c2...Dealer(hole)
 // After all cards are dealt, continues normal game flow.
 // ======================================================
-const DEAL_DELAY_MS = 220; // ms between each card during initial deal
+const DEAL_DELAY_MS = 0; // ms between each card during initial deal
 
 function animatedStartRound() {
+    console.log("animatedStartRound called");
     // Run all the round-start logic EXCEPT the actual deal
     game.phase            = "BETTING";
     game.currentHandIndex = 0;
